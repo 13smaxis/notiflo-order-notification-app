@@ -1,4 +1,4 @@
-// Service Worker for Moses Butchery Order Tracing
+// Service Worker for Chamdor Meat Supply Order Tracing
 const CACHE_NAME = 'moses-butchery-v1';
 const urlsToCache = [
   '/',

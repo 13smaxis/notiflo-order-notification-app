@@ -57,7 +57,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
           <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <Beef className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Moses Butchery</h1>
+          <h1 className="text-2xl font-bold text-white">Chamdor Meat Supply</h1>
           <p className="text-white/80 mt-1">Order Tracing System</p>
         </div>
 

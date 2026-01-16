@@ -1,7 +1,7 @@
 {
-  "name": "Moses Butchery Order Tracing",
+  "name": "Chamdor Meat Supply Order Tracing",
   "short_name": "Moses Orders",
-  "description": "Order tracing system for Moses Butchery - track orders from queue to collection",
+  "description": "Order tracing system for Chamdor Meat Supply - track orders from queue to collection",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e293b",

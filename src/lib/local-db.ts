@@ -46,6 +46,8 @@ export function seedDemoOrdersIfNeeded() {
       created_at,
       updated_at: created_at,
       grill_started_at: null,
+      grill_paused_at: null,
+      grill_accumulated_ms: 0,
       ready_at: null,
       collected_at: null,
       created_by: 'demo'
@@ -59,6 +61,8 @@ export function seedDemoOrdersIfNeeded() {
       created_at,
       updated_at: created_at,
       grill_started_at: null,
+      grill_paused_at: null,
+      grill_accumulated_ms: 0,
       ready_at: null,
       collected_at: null,
       created_by: 'demo'
@@ -72,6 +76,8 @@ export function seedDemoOrdersIfNeeded() {
       created_at,
       updated_at: created_at,
       grill_started_at: created_at,
+      grill_paused_at: null,
+      grill_accumulated_ms: 0,
       ready_at: null,
       collected_at: null,
       created_by: 'demo'
@@ -85,6 +91,8 @@ export function seedDemoOrdersIfNeeded() {
       created_at,
       updated_at: created_at,
       grill_started_at: created_at,
+      grill_paused_at: null,
+      grill_accumulated_ms: 0,
       ready_at: null,
       collected_at: null,
       created_by: 'demo'
@@ -98,6 +106,8 @@ export function seedDemoOrdersIfNeeded() {
       created_at,
       updated_at: created_at,
       grill_started_at: created_at,
+      grill_paused_at: null,
+      grill_accumulated_ms: 0,
       ready_at: created_at,
       collected_at: null,
       created_by: 'demo'
@@ -111,6 +121,8 @@ export function seedDemoOrdersIfNeeded() {
       created_at,
       updated_at: created_at,
       grill_started_at: created_at,
+      grill_paused_at: null,
+      grill_accumulated_ms: 0,
       ready_at: created_at,
       collected_at: created_at,
       created_by: 'demo'
@@ -140,6 +152,9 @@ export function addOrderLocal(input: {
     created_at,
     updated_at: created_at,
     grill_started_at: null,
+    grill_paused_at: null,
+    grill_accumulated_ms: 0,
+    previous_grill_ms: 0,
     ready_at: null,
     collected_at: null,
     created_by: 'demo'
@@ -156,11 +171,30 @@ export function updateOrderStageLocal(orderId: string, newStage: OrderStage) {
   const idx = orders.findIndex((o) => o.id === orderId);
   if (idx === -1) return false;
   const updated = { ...orders[idx] };
+  const previousStage = updated.stage;
   updated.stage = newStage;
   updated.updated_at = nowISO();
-  if (newStage === 'grill') updated.grill_started_at = updated.updated_at;
-  if (newStage === 'ready') updated.ready_at = updated.updated_at;
-  if (newStage === 'collected') updated.collected_at = updated.updated_at;
+
+  // Handle grill timer - simple logic
+  if (previousStage === 'grill' && newStage !== 'grill') {
+    // Leaving grill: save current session time to previous_grill_ms
+    if (updated.grill_started_at) {
+      const elapsed = Date.now() - new Date(updated.grill_started_at).getTime();
+      updated.previous_grill_ms = (updated.previous_grill_ms || 0) + elapsed;
+      // Keep grill_started_at for search modal display, just pause it
+      updated.grill_accumulated_ms = 0;
+      updated.grill_paused_at = updated.updated_at;
+    }
+  } else if (newStage === 'grill' && previousStage !== 'grill') {
+    // Moving to grill: always start a fresh timer
+    updated.grill_started_at = updated.updated_at;
+    updated.grill_accumulated_ms = 0;
+    updated.grill_paused_at = null;
+  }
+
+  if (newStage === 'ready' && !updated.ready_at) updated.ready_at = updated.updated_at;
+  if (newStage === 'collected' && !updated.collected_at) updated.collected_at = updated.updated_at;
+  
   orders[idx] = updated;
   saveAllOrders(orders);
   return true;
@@ -173,8 +207,11 @@ export function deleteOrderLocal(orderId: string) {
   return true;
 }
 
-export function searchOrdersLocal(orderNumber: string): Order[] {
-  const n = orderNumber.trim().toLowerCase();
-  if (!n) return listOrders();
-  return listOrders().filter((o) => o.order_number.toLowerCase().includes(n));
+export function searchOrdersLocal(query: string): Order[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return listOrders();
+  return listOrders().filter((o) => 
+    o.order_number.toLowerCase().includes(q) || 
+    o.customer_phone.toLowerCase().includes(q)
+  );
 }

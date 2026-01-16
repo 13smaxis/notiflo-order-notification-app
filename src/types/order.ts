@@ -1,6 +1,7 @@
 export type OrderStage = 'queue' | 'grill' | 'ready' | 'collected';
 
-export interface Order {
+export interface Order 
+{
   id: string;
   order_number: string;
   total_amount: number;
@@ -9,6 +10,9 @@ export interface Order {
   created_at: string;
   updated_at: string;
   grill_started_at: string | null;
+  grill_paused_at: string | null;
+  grill_accumulated_ms: number;
+  previous_grill_ms: number; // Total time from previous grill sessions
   ready_at: string | null;
   collected_at: string | null;
   created_by: string | null;

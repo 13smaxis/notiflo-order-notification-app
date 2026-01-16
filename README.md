@@ -1,4 +1,4 @@
-# Moses Butchery App (Vite + React + TS)
+# Chamdor Meat Supply App (Vite + React + TS)
 
 ## Demo Mode (Local DB)
 

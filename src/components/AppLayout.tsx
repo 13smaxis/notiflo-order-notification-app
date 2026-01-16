@@ -258,7 +258,7 @@ const AppLayout: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <p className="text-white font-semibold">Moses Butchery</p>
+                <p className="text-white font-semibold">Chamdor Meat Supply</p>
                 <p className="text-xs text-slate-500">Order Tracing System</p>
               </div>
             </div>

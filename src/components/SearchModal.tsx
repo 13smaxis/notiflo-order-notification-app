@@ -113,7 +113,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearch }) 
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Enter order number..."
+                placeholder="Order number or phone..."
                 className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-slate-500 focus:ring-0 outline-none transition-colors text-lg font-mono"
                 autoFocus
               />
@@ -191,32 +191,123 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearch }) 
                       </div>
                     </div>
 
-                    {/* Timeline */}
-                    {(order.grill_started_at || order.ready_at || order.collected_at) && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Timeline</p>
-                        <div className="space-y-1 text-xs text-gray-500">
-                          {order.grill_started_at && (
-                            <div className="flex items-center gap-2">
-                              <Flame className="w-3 h-3 text-orange-500" />
-                              <span>Started grilling: {formatDate(order.grill_started_at)}</span>
+                    {/* Timeline with stage durations */}
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Stage Timeline</p>
+                      <div className="space-y-2 text-xs">
+                        {/* Queue Stage */}
+                        <div className="flex items-start gap-2">
+                          <Clock className="w-3 h-3 text-slate-500 mt-0.5" />
+                          <div className="flex-1">
+                            <div className="text-gray-600 font-medium">Queue</div>
+                            <div className="text-gray-500 text-[11px] mt-0.5">
+                              {formatDate(order.created_at)}
                             </div>
-                          )}
-                          {order.ready_at && (
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="w-3 h-3 text-green-500" />
-                              <span>Ready: {formatDate(order.ready_at)}</span>
+                            <div className="text-gray-600 text-[11px] font-semibold mt-1">
+                              Duration: {(() => {
+                                const start = new Date(order.created_at).getTime();
+                                const end = order.grill_started_at
+                                  ? new Date(order.grill_started_at).getTime()
+                                  : Date.now();
+                                const diff = Math.floor((end - start) / 1000);
+                                const mins = Math.floor(diff / 60);
+                                const secs = diff % 60;
+                                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                              })()}
                             </div>
-                          )}
-                          {order.collected_at && (
-                            <div className="flex items-center gap-2">
-                              <ShoppingBag className="w-3 h-3 text-blue-500" />
-                              <span>Collected: {formatDate(order.collected_at)}</span>
+                          </div>
+                        </div>
+
+                        {/* Grill Stage */}
+                        {order.grill_started_at && (
+                          <div className="flex items-start gap-2">
+                            <Flame className="w-3 h-3 text-orange-500 mt-0.5" />
+                            <div className="flex-1">
+                              <div className="text-gray-600 font-medium">On Grill</div>
+                              <div className="text-gray-500 text-[11px] mt-0.5">
+                                {formatDate(order.grill_started_at)}
+                              </div>
+                              <div className="text-gray-600 text-[11px] font-semibold mt-1">
+                                Duration: {(() => {
+                                  let totalMs = order.previous_grill_ms || 0;
+                                  const grillStart = new Date(order.grill_started_at).getTime();
+                                  const grillEnd = order.ready_at
+                                    ? new Date(order.ready_at).getTime()
+                                    : Date.now();
+                                  totalMs += grillEnd - grillStart;
+                                  const diff = Math.floor(totalMs / 1000);
+                                  const mins = Math.floor(diff / 60);
+                                  const secs = diff % 60;
+                                  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                                })()}
+                              </div>
                             </div>
-                          )}
+                          </div>
+                        )}
+
+                        {/* Ready Stage */}
+                        {order.ready_at && (
+                          <div className="flex items-start gap-2">
+                            <CheckCircle className="w-3 h-3 text-green-500 mt-0.5" />
+                            <div className="flex-1">
+                              <div className="text-gray-600 font-medium">Ready</div>
+                              <div className="text-gray-500 text-[11px] mt-0.5">
+                                {formatDate(order.ready_at)}
+                              </div>
+                              <div className="text-gray-600 text-[11px] font-semibold mt-1">
+                                Duration: {(() => {
+                                  const readyStart = new Date(order.ready_at).getTime();
+                                  const readyEnd = order.collected_at
+                                    ? new Date(order.collected_at).getTime()
+                                    : Date.now();
+                                  const diff = Math.floor((readyEnd - readyStart) / 1000);
+                                  const mins = Math.floor(diff / 60);
+                                  const secs = diff % 60;
+                                  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Collected Stage */}
+                        {order.collected_at && (
+                          <div className="flex items-start gap-2">
+                            <ShoppingBag className="w-3 h-3 text-blue-500 mt-0.5" />
+                            <div className="flex-1">
+                              <div className="text-gray-600 font-medium">Collected</div>
+                              <div className="text-gray-500 text-[11px] mt-0.5">
+                                {formatDate(order.collected_at)}
+                              </div>
+                              <div className="text-gray-600 text-[11px] font-semibold mt-1">
+                                Duration: 0 secs
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Total time */}
+                        <div className="flex items-start gap-2 pt-2 border-t border-gray-200 mt-2">
+                          <Clock className="w-3 h-3 text-gray-700 mt-0.5" />
+                          <div className="flex-1">
+                            <span className="text-gray-700 font-semibold">
+                              Total time: {(() => {
+                                const created = new Date(order.created_at).getTime();
+                                const end = order.collected_at 
+                                  ? new Date(order.collected_at).getTime()
+                                  : order.ready_at 
+                                  ? new Date(order.ready_at).getTime()
+                                  : Date.now();
+                                const diff = Math.floor((end - created) / 1000);
+                                const mins = Math.floor(diff / 60);
+                                const secs = diff % 60;
+                                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                              })()}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}

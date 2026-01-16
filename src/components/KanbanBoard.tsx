@@ -85,7 +85,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
     stageOrders.sort((a, b) => {
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
-      return stage.id === 'queue' ? dateB - dateA : dateA - dateB;
+      return dateB - dateA; // Newest first for all stages
     });
     
     acc[stage.id] = stageOrders;

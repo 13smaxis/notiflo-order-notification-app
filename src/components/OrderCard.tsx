@@ -24,21 +24,32 @@ const StageIcon: React.FC<{ stage: OrderStage; className?: string }> = ({ stage,
   }
 };
 
-const GrillTimer: React.FC<{ startTime: string }> = ({ startTime }) => {
+const GrillTimer: React.FC<{ startTime: string; pausedTime?: string; accumulatedMs?: number; isOnGrill?: boolean }> = ({ startTime, pausedTime, accumulatedMs = 0, isOnGrill = false }) => {
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
-    const start = new Date(startTime).getTime();
     const updateElapsed = () => {
-      const now = Date.now();
-      setElapsed(Math.floor((now - start) / 1000));
+      let totalMs: number;
+      if (pausedTime) {
+        // Timer is paused - show accumulated time
+        totalMs = accumulatedMs;
+      } else if (isOnGrill) {
+        // Timer is running on Grill - calculate from start time
+        const start = new Date(startTime).getTime();
+        const now = Date.now();
+        totalMs = now - start;
+      } else {
+        // Not on Grill and not paused - shouldn't happen but show accumulated
+        totalMs = accumulatedMs;
+      }
+      setElapsed(Math.floor(totalMs / 1000));
     };
     
     updateElapsed();
     const interval = setInterval(updateElapsed, 1000);
 
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, [startTime, pausedTime, accumulatedMs, isOnGrill]);
 
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
@@ -52,10 +63,11 @@ const GrillTimer: React.FC<{ startTime: string }> = ({ startTime }) => {
 
   return (
     <div className={`flex items-center gap-1 ${getTimerColor()} px-1.5 py-1 rounded-lg font-mono text-xs font-bold`}>
-      <Timer className="w-2.5 h-2.5 animate-pulse" />
+      <Timer className={`w-2.5 h-2.5 ${pausedTime ? '' : 'animate-pulse'}`} />
       <span className="tabular-nums">
         {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </span>
+      {pausedTime && <span className="text-xs ml-0.5">⏸</span>}
     </div>
   );
 };
@@ -151,12 +163,29 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, isDragging })
           </span>
         </div>
 
-        {/* Timer for grill stage */}
-        {order.stage === 'grill' && order.grill_started_at && (
-          <div className="mb-1.5">
-            <GrillTimer startTime={order.grill_started_at} />
-          </div>
-        )}
+        {/* Timers */}
+        <div className="space-y-1 mb-1.5">
+          {/* Previous grill time (paused) */}
+          {order.previous_grill_ms > 0 && (
+            <div className="flex items-center gap-1 text-gray-600 bg-gray-100 border border-gray-300 px-1.5 py-1 rounded-lg font-mono text-xs">
+              <Timer className="w-2.5 h-2.5" />
+              <span className="text-[10px] opacity-60">Previous:</span>
+              <span className="font-bold tabular-nums">
+                {String(Math.floor(order.previous_grill_ms / 60000)).padStart(2, '0')}:{String(Math.floor((order.previous_grill_ms % 60000) / 1000)).padStart(2, '0')}
+              </span>
+              <span className="text-xs">⏸</span>
+            </div>
+          )}
+          {/* Current grill timer */}
+          {order.grill_started_at && order.stage === 'grill' && (
+            <GrillTimer 
+              startTime={order.grill_started_at}
+              pausedTime={null}
+              accumulatedMs={0}
+              isOnGrill={true}
+            />
+          )}
+        </div>
 
         {/* Drag hint */}
         <div className="text-center text-xs text-gray-400 pt-0.5">
