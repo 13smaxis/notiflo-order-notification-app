@@ -17,14 +17,19 @@ function uuid() {
   return 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-function getAllOrders(): Order[] {
-  const raw = localStorage.getItem(ORDERS_KEY);
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as Order[];
-    return Array.isArray(parsed) ? parsed : [];
+/**
+ * Get all orders from local storage
+ * @returns An array of Order objects
+ */
+function getAllOrders(): Order[]                                                                                //-TypeScript function that retunrns arrays(all orders from local storage)
+{
+  const raw = localStorage.getItem(ORDERS_KEY); 
+  if (!raw) return [];                                                                                          //-If no orders stored, return empty array
+  try {                                                                                                         //-Try to parse the stored orders
+    const parsed = JSON.parse(raw) as Order[];                                                                  //-Parse the JSON string into an array of Order objects
+    return Array.isArray(parsed) ? parsed : [];                                                                 //-Check if parsed data is an array, if not return empty array
   } catch {
-    return [];
+    return [];                                                                                                  //-If parsing fails, return empty array
   }
 }
 

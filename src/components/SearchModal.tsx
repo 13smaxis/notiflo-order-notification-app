@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react';                                                                        //-useState is a memory hook for a component, card values on search modal
 import { X, Search, Clock, Flame, CheckCircle, ShoppingBag, Phone, Calendar, Hash } from 'lucide-react';
 import { Order, OrderStage, STAGES } from '@/types/order';
 
-interface SearchModalProps {
+interface SearchModalProps 
+{
   isOpen: boolean;
   onClose: () => void;
   onSearch: (orderNumber: string) => Promise<{ data: Order[] | null; error: string | null }>;
@@ -40,7 +41,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearch }) 
     setSearched(true);
 
     const { data, error: searchError } = await onSearch(searchQuery.trim());
-    
+
     setLoading(false);
     if (searchError) {
       setError(searchError);
@@ -293,11 +294,11 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearch }) 
                             <span className="text-gray-700 font-semibold">
                               Total time: {(() => {
                                 const created = new Date(order.created_at).getTime();
-                                const end = order.collected_at 
+                                const end = order.collected_at
                                   ? new Date(order.collected_at).getTime()
-                                  : order.ready_at 
-                                  ? new Date(order.ready_at).getTime()
-                                  : Date.now();
+                                  : order.ready_at
+                                    ? new Date(order.ready_at).getTime()
+                                    : Date.now();
                                 const diff = Math.floor((end - created) / 1000);
                                 const mins = Math.floor(diff / 60);
                                 const secs = diff % 60;

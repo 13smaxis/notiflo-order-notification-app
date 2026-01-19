@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Order, OrderStage, STAGES } from '@/types/order';
 import OrderCard from './OrderCard';
-import { Clock, Flame, CheckCircle, ShoppingBag } from 'lucide-react';
+import { Clock, Flame, CheckCircle, ShoppingBag } from 'lucide-react';                                          //-Icons for stages
 
-interface KanbanBoardProps {
+interface KanbanBoardProps 
+{
   orders: Order[];
   onMoveOrder: (orderId: string, newStage: OrderStage) => void;
   loading: boolean;
