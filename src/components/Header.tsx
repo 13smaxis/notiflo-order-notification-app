@@ -31,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({
               <Beef className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-lg md:text-xl font-bold tracking-tight">Chamdor Meat Supply</h1>
+              <h1 className="text-lg md:text-xl font-bold tracking-tight">NotiFlo</h1>
               <p className="text-xs text-slate-400 hidden sm:block">Order Tracing System</p>
             </div>
           </div>

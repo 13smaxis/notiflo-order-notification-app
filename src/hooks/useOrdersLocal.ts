@@ -9,7 +9,8 @@ import {
   deleteOrderLocal
 } from '@/lib/local-db';
 
-export function useOrdersLocal() {
+export function useOrdersLocal() 
+{
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

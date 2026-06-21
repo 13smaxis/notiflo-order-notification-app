@@ -224,7 +224,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearch }) 
                           <div className="flex items-start gap-2">
                             <Flame className="w-3 h-3 text-orange-500 mt-0.5" />
                             <div className="flex-1">
-                              <div className="text-gray-600 font-medium">On Grill</div>
+                              <div className="text-gray-600 font-medium">Preparing</div>
                               <div className="text-gray-500 text-[11px] mt-0.5">
                                 {formatDate(order.grill_started_at)}
                               </div>

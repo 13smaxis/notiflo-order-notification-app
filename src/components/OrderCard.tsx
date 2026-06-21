@@ -34,12 +34,12 @@ const GrillTimer: React.FC<{ startTime: string; pausedTime?: string; accumulated
         // Timer is paused - show accumulated time
         totalMs = accumulatedMs;
       } else if (isOnGrill) {
-        // Timer is running on Grill - calculate from start time
+        // Timer is running preparing - calculate from start time
         const start = new Date(startTime).getTime();
         const now = Date.now();
         totalMs = now - start;
       } else {
-        // Not on Grill and not paused - shouldn't happen but show accumulated
+        // Not preparing and not paused - shouldn't happen but show accumulated
         totalMs = accumulatedMs;
       }
       setElapsed(Math.floor(totalMs / 1000));

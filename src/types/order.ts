@@ -12,13 +12,14 @@ export interface Order
   grill_started_at: string | null;
   grill_paused_at: string | null;
   grill_accumulated_ms: number;
-  previous_grill_ms: number; // Total time from previous grill sessions
+  previous_grill_ms: number;                                                                                    //-Total time from previous grill sessions
   ready_at: string | null;
   collected_at: string | null;
   created_by: string | null;
 }
 
-export interface Staff {
+export interface Staff 
+{
   id: string;
   email: string;
   full_name: string;
@@ -27,7 +28,8 @@ export interface Staff {
   last_login: string | null;
 }
 
-export interface StageConfig {
+export interface StageConfig 
+{
   id: OrderStage;
   title: string;
   color: string;
@@ -47,7 +49,7 @@ export const STAGES: StageConfig[] = [
   },
   {
     id: 'grill',
-    title: 'On Grill',
+    title: 'Preparing',
     color: 'text-orange-700',
     bgColor: 'bg-orange-100',
     borderColor: 'border-orange-300',

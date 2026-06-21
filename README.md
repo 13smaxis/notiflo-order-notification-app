@@ -3,7 +3,7 @@
 ## Project Structure
 
 ```
-charmdor-meat-supply-app/
+order-tracking-app/
 ├── public/
 │   ├── manifest.json          # PWA manifest
 │   ├── robots.txt             # SEO robots file

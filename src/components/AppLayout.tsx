@@ -134,7 +134,7 @@ const AppLayout: React.FC = () => {
     if (!result.error)                                                                                          //-If addition successful
     {
       setToast({
-        message: `Order #${orderData.order_number} added to Queue`,
+        message: `Order #${orderData.order_number} has been recieved`,
         type: 'success'
       });
     }
@@ -193,7 +193,7 @@ const AppLayout: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" />
                 <span className="text-sm text-gray-600">
-                        Grill: <strong className="text-gray-800">{stageCounts.grill}</strong>
+                        Preparing: <strong className="text-gray-800">{stageCounts.grill}</strong>
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -290,12 +290,11 @@ const AppLayout: React.FC = () => {
           </div>
         )}
 
-        {/* Kanban Board */}
         <KanbanBoard
           orders={orders}
           onMoveOrder={handleMoveOrder}
           loading={loading}
-        />
+        />                                                                                                      {/* Kanban Board */}
 
         {/* If we are not loading AND there are zero orders, then show this UI */}
         {/* true && true && JSX, if any condition is false, react renders nothing */}
@@ -420,7 +419,7 @@ const AppLayout: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <p className="text-white font-semibold">Chamdor Meat Supply</p>
+                <p className="text-white font-semibold">NotiFlo</p>
                 <p className="text-xs text-slate-500">Order Tracing System</p>
               </div>
             </div>
