@@ -50,11 +50,28 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-amber-700 to-red-700 px-6 py-8 text-center">
-          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="
+                      relative 
+                      bg-white rounded-2xl 
+                      shadow-2xl 
+                      w-full max-w-md 
+                      overflow-hidden 
+                      animate-in fade-in zoom-in 
+                      duration-200
+                    "
+      >                                                                                                         {/* Modal */}
+       
+        <div className="bg-gradient-to-r from-amber-700 to-red-700 px-6 py-8 text-center">                  {/* Header */}
+          <div className="
+                            w-20 h-20 
+                            bg-white/20 
+                            rounded-full 
+                            flex 
+                            items-center 
+                            justify-center 
+                            mx-auto mb-4
+                          "
+          >                                                                                                     {/* Icon Background */}
             <BellRing className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">NotiFlo</h1>
@@ -64,21 +81,36 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
-        >
-          <X className="w-6 h-6" />
+          className="
+                      absolute 
+                      top-4 right-4 
+                      text-white/80 
+                      hover:text-white 
+                      transition-colors 
+                      p-1 
+                      rounded-lg 
+                      hover:bg-white/10
+                    "
+        >                                                                                                       {/* Close Icon */ }
+          <X className="w-6 h-6" /> 
         </button>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">                                                {/* Form */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="
+                          bg-red-50 
+                          border border-red-200 
+                          text-red-700 
+                          px-4 py-3 
+                          rounded-lg 
+                          text-sm
+                        "
+            >                                                                                                   {/* Form */}
               {error}
             </div>
           )}
 
-          {/* Email */}
-          <div>
+          <div>                                                                                                 {/* Email */}
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Email Address
             </label>
@@ -89,14 +121,21 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-amber-500 focus:ring-0 outline-none transition-colors"
+                className="
+                            w-full 
+                            pl-11 pr-4 py-3 
+                            border-2 border-gray-200 
+                            rounded-xl 
+                            focus:border-amber-500 focus:ring-0 
+                            outline-none 
+                            transition-colors
+                          "
                 autoFocus
-              />
+              />                                                                                                {/* Autofocus for better UX */}
             </div>
           </div>
 
-          {/* Password */}
-          <div>
+          <div>                                                                                                 {/* Password */}
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Password
             </label>
@@ -107,8 +146,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-amber-500 focus:ring-0 outline-none transition-colors"
-              />
+                className="
+                            w-full pl-11 pr-4 py-3 
+                            border-2 border-gray-200 
+                            rounded-xl 
+                            focus:border-amber-500 focus:ring-0 
+                            outline-none 
+                            transition-colors
+                          "
+              />                                                                                                {/* Password input field */ }
             </div>
           </div>
 

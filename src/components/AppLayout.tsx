@@ -170,10 +170,11 @@ const AppLayout: React.FC = () => {
                       flex flex-col
                       bg-slate-400
                       rounded-3xl
-                      shadow-2xl
+                    
                       overflow-hidden
                       flex-1
-                    ">
+                    "
+      >                                                                                                         {/* Inner container with rounded corners and shadow */ }
         <Header
         user={user}
         onOpenSearch={() => setSearchModalOpen(true)}

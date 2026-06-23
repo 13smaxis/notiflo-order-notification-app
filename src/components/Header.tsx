@@ -32,14 +32,18 @@ const Header: React.FC<HeaderProps> = ({
                     >
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-amber-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Beef className="w-6 h-6 md:w-7 md:h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg md:text-xl font-bold tracking-tight">NotiFlo</h1>
-              <p className="text-xs text-slate-400 hidden sm:block">Order Notifications</p>
+          <div className="flex items-center gap-3">                                                             {/* Logo */}
+            <div className="
+                              h-80 w-auto
+                              aspect-square
+                              overflow-hidden 
+                              flex items-center 
+                              justify-center 
+                            "
+            >
+              <img src="/logo.png" 
+                   alt="NotiFlo logo" 
+                  className="h-full w-full object-contain" />
             </div>
           </div>
 
