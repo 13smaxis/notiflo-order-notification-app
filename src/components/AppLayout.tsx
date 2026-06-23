@@ -35,25 +35,13 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
   }, [onClose]);                                                                                                //-Dependency array to avoid re-running effect unnecessarily
 
   const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';        //-Custom background color based on type
-
-  
   return (
-    <div className={`
-                      fixed bottom-20 left-1/2 -translate-x-1/2 ${bgColor} 
-                      text-white 
-                      px-6 py-3 
-                      rounded-xl 
-                      shadow-xl flex 
-                      items-center 
-                      gap-3 z-50
-                      animate-in fade-in slide-in-from-bottom-4 
-                      duration-300
-                   `}
+    <div
+      className={`fixed bottom-20 left-1/2 -translate-x-1/2 ${bgColor} text-white px-6 py-3 rounded-xl shadow-xl flex items-center gap-3 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300`}
     >                                                                                                           {/* Sets background color based on toast type */ }
-      <CheckCircle className="w-5 h-5" /> 
+      <CheckCircle className="w-5 h-5" />
       <span className="font-medium">{message}</span>
-      <button onClick={onClose} 
-              className="ml-2 hover:bg-white/20 rounded-full p-1">
+      <button onClick={onClose} className="ml-2 hover:bg-white/20 rounded-full p-1">
         <X className="w-4 h-4" />
       </button>
     </div>
@@ -170,7 +158,7 @@ const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-amber-50">             {/* Main container with gradient background */}
+    <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-amber-50">             {/* Main container with gradient background */}
       <Header
         user={user}
         onOpenSearch={() => setSearchModalOpen(true)}
@@ -230,7 +218,7 @@ const AppLayout: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto pb-24">                                                                {/* Main Content */}
+      <main className="flex-1 overflow-hidden max-w-7xl mx-auto pb-24">                                                                {/* Main Content */}
         {error && (
           <div className="
                           m-4 
@@ -265,49 +253,17 @@ const AppLayout: React.FC = () => {
           </div>
         )}
 
-        {/* Login Prompt Banner */}
-        {showLoginPrompt && !isAuthenticated && (
-          <div className="
-                            m-4 bg-gradient-to-r from-amber-50 to-orange-50 
-                            border border-amber-200 
-                            rounded-xl 
-                            p-4 flex flex-col 
-                            sm:flex-row 
-                            items-start 
-                            sm:items-center 
-                            gap-3
-                          "
-          >
-            <div className="flex-1">
-              <p className="text-amber-800 font-semibold">Sign in to manage orders</p>
-              <p className="text-amber-700 text-sm">
-                You can view orders, but you need to sign in to add or update them.
-              </p>
-            </div>
-            <button
-              onClick={() => setLoginModalOpen(true)}
-              className="
-                          px-5 py-2.5 
-                          bg-gradient-to-r from-amber-500 to-orange-500 
-                          hover:from-amber-600 hover:to-orange-600 
-                          text-white 
-                          rounded-lg 
-                          transition-colors 
-                          font-semibold 
-                          shadow-md 
-                          hover:shadow-lg
-                        "
-            >
-              Sign In
-            </button>
-          </div>
-        )}
+        {/* Login Prompt Banner removed — header handles sign-in */}
 
-        <KanbanBoard
-          orders={orders}
-          onMoveOrder={handleMoveOrder}
-          loading={loading}
-        />                                                                                                      {/* Kanban Board */}
+        <div className="mx-0 md:mx-4 my-4 h-full">
+          <div className="max-w-7xl mx-auto h-full">
+            <KanbanBoard
+              orders={orders}
+              onMoveOrder={handleMoveOrder}
+              loading={loading}
+            />
+          </div>
+        </div>
 
         {/* If we are not loading AND there are zero orders, then show this UI */}
         {/* true && true && JSX, if any condition is false, react renders nothing */}
@@ -411,38 +367,7 @@ const AppLayout: React.FC = () => {
         </button>
       )}
 
-      <footer className="bg-gradient-to-r from-slate-800 to-slate-900 text-slate-400 py-8 mt-auto">       {/* Footer */}
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="
-                              w-10 h-10 
-                              bg-gradient-to-br from-amber-500 to-red-600 
-                              rounded-xl 
-                              flex 
-                              items-center 
-                              justify-center
-                            "
-              >
-                <svg className="w-6 h-6 text-white" 
-                     fill="currentColor" 
-                     viewBox="0 0 24 24"
-                >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-white font-semibold">NotiFlo</p>
-                <p className="text-xs text-slate-500">Order Tracing System</p>
-              </div>
-            </div>
-            <div className="text-center md:text-right">
-              <p className="text-sm">Designed for efficient order management</p>
-              <p className="text-xs text-slate-500 mt-1">Real-time tracking from queue to collection</p>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* Footer removed — app content adapts to viewport */}
 
       {/* Modals */}
       <AddOrderModal

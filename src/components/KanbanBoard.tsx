@@ -79,7 +79,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
   const ordersByStage = STAGES.reduce((acc, stage) => {
     let stageOrders = orders.filter((order) => order.stage === stage.id);
     
-    if (stage.id === 'collected') {
+    /*
+     * Filter out collected orders that are no longer visible (older than 5 minutes)
+     * This ensures that only recent collected orders are displayed in the Kanban board.
+     * The visibleCollectedOrders set is updated every 10 seconds to reflect the current state.
+     */
+    if (stage.id === 'collected') 
+    {
       stageOrders = stageOrders.filter((order) => visibleCollectedOrders.has(order.id));
     }
     
@@ -99,7 +105,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <div className="w-16 h-16 border-4 border-amber-200 rounded-full animate-pulse" />
+            <div className="
+                            w-16 h-16 
+                            border-4 border-amber-200 
+                            rounded-full 
+                            animate-pulse
+                           " 
+            />                                                                                                  //- Outer pulsing circle
             <div className="
                             absolute 
                             inset-0 w-16 h-16 
@@ -107,7 +119,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
                             rounded-full 
                             animate-spin
                           " 
-            />
+            />                                                                                                  //- Inner spinning circle
           </div>
           <p className="text-gray-500 font-medium">Loading orders...</p>
         </div>
@@ -117,13 +129,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
 
   return (
     <div
-      className="
-                  flex 
-                  gap-0 p-2 
-                  bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 
-                  min-h-screen
-                  rounded-2xl mx-0 md:mx-4 my-2 md:my-4
-                "
+      className="flex gap-0 p-2 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 h-full overflow-y-auto rounded-2xl mx-0 md:mx-4 my-2 md:my-4"
       onDragEnd={handleDragEnd}
       onDragLeave={() => setDragTargetStage(null)}
     >
@@ -147,7 +153,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
             </div>
 
             <div
-              className="flex-1 flex flex-col gap-2 px-2 overflow-y-auto min-h-0"
+              className="flex-1 flex flex-col gap-2 px-2 min-h-0"
               onDragOver={(e) => handleDragOver(e, stage.id)}
               onDrop={(e) => handleDrop(e, stage.id)}
             >                                                                                                   {/* Cards Container */}
@@ -183,15 +189,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
             </div>
           </div>
 
-          {idx 
-              < STAGES.length - 1 && (
-              <div className="
-                            w-1 h-full 
-                            bg-gradient-to-b from-white/10 via-white/20 to-white/10 
-                            mx-1 
-                            flex-shrink-0
-                          " 
-            /> 
+          {idx < STAGES.length - 1 && (
+            <div className="
+                              w-1 h-full 
+                              bg-gradient-to-b from-white/10 via-white/20 to-white/10 
+                              mx-1 
+                              flex-shrink-0
+                            " 
+            />
           )}
         </React.Fragment>
       ))}
