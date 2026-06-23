@@ -22,7 +22,14 @@ const Header: React.FC<HeaderProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   return (
-    <header className="bg-gradient-to-r from-slate-800 to-slate-900 text-white sticky top-0 z-40 rounded-2xl mx-0 md:mx-4 my-2">
+    <header className="
+                        bg-gradient-to-r from-slate-800 to-slate-900 
+                        text-white 
+                        sticky top-0 z-40 
+                        rounded-2xl 
+                        mx-0 md:mx-4 my-2 md:my-4
+                      "
+                    >
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
@@ -32,7 +39,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
             <div>
               <h1 className="text-lg md:text-xl font-bold tracking-tight">NotiFlo</h1>
-              <p className="text-xs text-slate-400 hidden sm:block">Order Tracing System</p>
+              <p className="text-xs text-slate-400 hidden sm:block">Order Notifications</p>
             </div>
           </div>
 
