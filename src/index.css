@@ -101,6 +101,15 @@
   }
 }
 
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .markdown-editor {
   @apply font-mono text-base leading-relaxed;
 }

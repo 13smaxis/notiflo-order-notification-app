@@ -158,7 +158,13 @@ const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-amber-50">             {/* Main container with gradient background */}
+    <div className="
+                      h-screen 
+                      overflow-hidden 
+                      flex flex-col 
+                      bg-gradient-to-br from-slate-100 via-slate-50 to-amber-50
+                    "
+    >                                      {/* Main container with gradient background */}
       <Header
         user={user}
         onOpenSearch={() => setSearchModalOpen(true)}
@@ -218,7 +224,7 @@ const AppLayout: React.FC = () => {
         </div>
       </div>
 
-      <main className="flex-1 overflow-hidden max-w-7xl mx-auto pb-24">                                                                {/* Main Content */}
+      <main className="flex-1 overflow-hidden">                                                                {/* Main Content */}
         {error && (
           <div className="
                           m-4 
@@ -255,8 +261,8 @@ const AppLayout: React.FC = () => {
 
         {/* Login Prompt Banner removed — header handles sign-in */}
 
-        <div className="mx-0 md:mx-4 my-4 h-full">
-          <div className="max-w-7xl mx-auto h-full">
+        <div className="mx-0 md:mx-4 my-2 md:my-2 h-full">
+          <div className="max-w-7xl mx-auto h-full px-4">
             <KanbanBoard
               orders={orders}
               onMoveOrder={handleMoveOrder}

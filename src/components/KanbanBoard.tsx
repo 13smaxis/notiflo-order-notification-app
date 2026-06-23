@@ -129,7 +129,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
 
   return (
     <div
-      className="flex gap-0 p-2 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 h-full overflow-y-auto rounded-2xl mx-0 md:mx-4 my-2 md:my-4"
+      className="flex w-full gap-0 p-2 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 h-full overflow-y-auto rounded-2xl hide-scrollbar"
       onDragEnd={handleDragEnd}
       onDragLeave={() => setDragTargetStage(null)}
     >
