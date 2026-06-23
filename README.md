@@ -71,8 +71,8 @@ VITE_USE_LOCAL_DB=true
 - To use the remote backend in production, build without the flag or set `VITE_USE_LOCAL_DB=false`.
 
 ### Demo login
-- Email: any email (e.g. demo@example.com)
-- Password: `moses2024`
+- Email: `admin@smaxis.com`
+- Password: `demo2024`
 
 ### Scripts
 - Install: `npm install --legacy-peer-deps`

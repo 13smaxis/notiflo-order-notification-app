@@ -1,7 +1,7 @@
 import { Order, OrderStage } from '@/types/order';
 
-const ORDERS_KEY = 'moses_butchery_local_orders';
-const SEEDED_KEY = 'moses_butchery_local_seeded_v1';
+const ORDERS_KEY = 'chamdor_local_orders';
+const SEEDED_KEY = 'chamdor_local_seeded_v1';
 
 function nowISO() {
   return new Date().toISOString();
@@ -53,6 +53,7 @@ export function seedDemoOrdersIfNeeded() {
       grill_started_at: null,
       grill_paused_at: null,
       grill_accumulated_ms: 0,
+      previous_grill_ms: 0,
       ready_at: null,
       collected_at: null,
       created_by: 'demo'
@@ -68,6 +69,7 @@ export function seedDemoOrdersIfNeeded() {
       grill_started_at: null,
       grill_paused_at: null,
       grill_accumulated_ms: 0,
+      previous_grill_ms: 0,
       ready_at: null,
       collected_at: null,
       created_by: 'demo'
@@ -83,6 +85,7 @@ export function seedDemoOrdersIfNeeded() {
       grill_started_at: created_at,
       grill_paused_at: null,
       grill_accumulated_ms: 0,
+      previous_grill_ms: 0,
       ready_at: null,
       collected_at: null,
       created_by: 'demo'
@@ -98,6 +101,7 @@ export function seedDemoOrdersIfNeeded() {
       grill_started_at: created_at,
       grill_paused_at: null,
       grill_accumulated_ms: 0,
+      previous_grill_ms: 0,
       ready_at: null,
       collected_at: null,
       created_by: 'demo'
@@ -113,6 +117,7 @@ export function seedDemoOrdersIfNeeded() {
       grill_started_at: created_at,
       grill_paused_at: null,
       grill_accumulated_ms: 0,
+      previous_grill_ms: 0,
       ready_at: created_at,
       collected_at: null,
       created_by: 'demo'
@@ -128,6 +133,7 @@ export function seedDemoOrdersIfNeeded() {
       grill_started_at: created_at,
       grill_paused_at: null,
       grill_accumulated_ms: 0,
+      previous_grill_ms: 0,
       ready_at: created_at,
       collected_at: created_at,
       created_by: 'demo'

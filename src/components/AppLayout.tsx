@@ -36,7 +36,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
 
   const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';        //-Custom background color based on type
 
-  {/* Sets background color based on toast type */ }
+  
   return (
     <div className={`
                       fixed bottom-20 left-1/2 -translate-x-1/2 ${bgColor} 
@@ -49,7 +49,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
                       animate-in fade-in slide-in-from-bottom-4 
                       duration-300
                    `}
-    >
+    >                                                                                                           {/* Sets background color based on toast type */ }
       <CheckCircle className="w-5 h-5" /> 
       <span className="font-medium">{message}</span>
       <button onClick={onClose} 
@@ -180,33 +180,47 @@ const AppLayout: React.FC = () => {
         orderCount={activeOrderCount}
       />                                                                                                        {/* Header Component */}
 
-      <div className="bg-white border-b border-gray-100 shadow-sm">                                         {/* Quick Stats Bar */}
+      <div className="
+                    bg-gray-300
+                    border-b border-gray-100 
+                    rounded-2xl 
+                    mx-0 md:mx-4 my-2 md:my-2
+                  "
+      >                                                                                                         {/* Quick Stats Bar */}
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4 overflow-x-auto">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2"> 
                 <div className="w-3 h-3 rounded-full bg-slate-500" />
-                <span className="text-sm text-gray-600">
-                        Queue: <strong className="text-gray-800">{stageCounts.queue}</strong>
-                </span>
+                  <span className="text-sm text-gray-600">
+                          Queue: <strong className="text-gray-800">
+                                    {stageCounts.queue}
+                                  </strong>
+                  </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" />
-                <span className="text-sm text-gray-600">
-                        Preparing: <strong className="text-gray-800">{stageCounts.grill}</strong>
-                </span>
+                  <span className="text-sm text-gray-600">
+                          Preparing: <strong className="text-gray-800">
+                                      {stageCounts.grill}
+                                    </strong>
+                  </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="text-sm text-gray-600">
-                        Ready: <strong className="text-gray-800">{stageCounts.ready}</strong>
-                </span>
+                  <span className="text-sm text-gray-600">
+                          Ready: <strong className="text-gray-800">
+                                      {stageCounts.ready}
+                                 </strong>
+                  </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500" />
-                <span className="text-sm text-gray-600">
-                        Collected: <strong className="text-gray-800">{stageCounts.collected}</strong>
-                </span>
+                  <span className="text-sm text-gray-600">
+                          Collected: <strong className="text-gray-800">
+                                        {stageCounts.collected}
+                                     </strong>
+                  </span>
               </div>
             </div>
             <div className="text-xs text-gray-400 hidden md:block">
@@ -216,8 +230,7 @@ const AppLayout: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto pb-24">                                                                 {/* Main Content */}
-        {/* Error State */}
+      <main className="max-w-7xl mx-auto pb-24">                                                                {/* Main Content */}
         {error && (
           <div className="
                           m-4 
@@ -227,7 +240,7 @@ const AppLayout: React.FC = () => {
                           flex 
                           items-center gap-3
                           "
-            >
+            >                                                                                                   {/* Error State */}
             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-red-700 font-medium">Error loading orders</p>

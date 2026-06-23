@@ -31,7 +31,7 @@ export function useOrdersLocal()
   useEffect(() => {
     fetchOrders();
     const onStorage = (e: StorageEvent) => {
-      if (e.key === 'moses_butchery_local_orders') {
+      if (e.key === 'chamdor_local_orders') {
         setOrders(listOrders());
       }
     };

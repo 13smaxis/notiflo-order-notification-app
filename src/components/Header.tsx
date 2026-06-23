@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   return (
-    <header className="bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-xl sticky top-0 z-40">
+    <header className="bg-gradient-to-r from-slate-800 to-slate-900 text-white sticky top-0 z-40 rounded-2xl mx-0 md:mx-4 my-2">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}

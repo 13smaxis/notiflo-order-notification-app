@@ -17,7 +17,7 @@ export function useAuth() {
 
   useEffect(() => {
     // Check for stored user on mount
-    const storedUser = localStorage.getItem('moses_butchery_user');
+    const storedUser = localStorage.getItem('chamdor_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -27,7 +27,7 @@ export function useAuth() {
   const login = useCallback(async (email: string, password: string) => {
     if (isLocalMode()) {
       try {
-        if (password !== 'moses2024') throw new Error('Invalid credentials');
+        if (password !== 'demo2024') throw new Error('Invalid credentials');
         const demoUser: Staff = {
           id: 'demo-user',
           email: email.toLowerCase(),
@@ -37,7 +37,7 @@ export function useAuth() {
           last_login: new Date().toISOString()
         };
         setUser(demoUser);
-        localStorage.setItem('moses_butchery_user', JSON.stringify(demoUser));
+        localStorage.setItem('chamdor_user', JSON.stringify(demoUser));
         return { user: demoUser, error: null };
       } catch (err: any) {
         return { user: null, error: err.message };
@@ -54,7 +54,7 @@ export function useAuth() {
       if (staffError || !staffData) {
         // For demo purposes, create a new staff member if they don't exist
         // In production, you'd want proper authentication
-        if (password === 'moses2024') {
+        if (password === 'demo2024') {
           const { data: newStaff, error: createError } = await supabase
             .from('staff')
             .insert([{
@@ -68,14 +68,14 @@ export function useAuth() {
           if (createError) throw createError;
           
           setUser(newStaff);
-          localStorage.setItem('moses_butchery_user', JSON.stringify(newStaff));
+          localStorage.setItem('chamdor_user', JSON.stringify(newStaff));
           return { user: newStaff, error: null };
         }
         throw new Error('Invalid credentials');
       }
 
       // Simple password check for demo (in production, use proper auth)
-      if (password !== 'moses2024') {
+      if (password !== 'demo2024') {
         throw new Error('Invalid password');
       }
 
@@ -86,7 +86,7 @@ export function useAuth() {
         .eq('id', staffData.id);
 
       setUser(staffData);
-      localStorage.setItem('moses_butchery_user', JSON.stringify(staffData));
+      localStorage.setItem('chamdor_user', JSON.stringify(staffData));
       return { user: staffData, error: null };
     } catch (err: any) {
       return { user: null, error: err.message };
@@ -95,7 +95,7 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem('moses_butchery_user');
+    localStorage.removeItem('chamdor_user');
   }, []);
 
   return {

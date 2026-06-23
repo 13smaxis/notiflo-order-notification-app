@@ -88,7 +88,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="staff@mosesbutchery.co.za"
+                placeholder="smaxis-004@outlook.com"
                 className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-amber-500 focus:ring-0 outline-none transition-colors"
                 autoFocus
               />
@@ -115,7 +115,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
           {/* Demo credentials hint */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
             <p className="text-sm text-amber-800">
-              <strong>Demo:</strong> Use any email and password <code className="bg-amber-100 px-1.5 py-0.5 rounded">moses2024</code>
+              <strong>Demo:</strong> Use any email and password <code className="bg-amber-100 px-1.5 py-0.5 rounded">demo2024</code>
             </p>
           </div>
 

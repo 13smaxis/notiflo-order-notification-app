@@ -1,6 +1,6 @@
 {
   "name": "Chamdor Meat Supply Order Tracing",
-  "short_name": "Moses Orders",
+  "short_name": "Chamdor Orders",
   "description": "Order tracing system for Chamdor Meat Supply - track orders from queue to collection",
   "start_url": "/",
   "display": "standalone",

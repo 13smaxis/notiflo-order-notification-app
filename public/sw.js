@@ -1,5 +1,12 @@
 // Service Worker for Chamdor Meat Supply Order Tracing
-const CACHE_NAME = 'moses-butchery-v1';
+/*
+ * This service worker implements a network-first caching strategy. 
+ * It tries to fetch the latest content from the network first. 
+ * If that fails (e.g., due to being offline), it falls back to the cached version of the content. 
+ * This ensures that users get the most up-to-date information when they are online, 
+ *  while still providing access to previously loaded content when they are offline.
+ */
+const CACHE_NAME = 'chamdor-order-tracking-v1';
 const urlsToCache = [
   '/',
   '/index.html',
