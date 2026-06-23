@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({
                         text-white 
                         sticky top-0 z-40 
                         rounded-2xl 
-                        mx-0 md:mx-4 my-2 md:my-4
+                        mx-0 md:mx-4 my-2 
                       "
                     >
       <div className="max-w-7xl mx-auto px-4">

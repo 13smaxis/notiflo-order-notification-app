@@ -71,7 +71,7 @@ VITE_USE_LOCAL_DB=true
 - To use the remote backend in production, build without the flag or set `VITE_USE_LOCAL_DB=false`.
 
 ### Demo login
-- Email: `admin@smaxis.com`
+- Email: `any email`
 - Password: `demo2024`
 
 ### Scripts

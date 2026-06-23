@@ -163,25 +163,27 @@ const AppLayout: React.FC = () => {
                       overflow-hidden 
                       flex flex-col 
                       bg-gradient-to-br from-slate-100 via-slate-50 to-amber-50
+                      p-3
                     "
-    >                                      {/* Main container with gradient background */}
-      <Header
+    >                                                                                                           {/* Main container with background gradient and padding */ }
+      <div className="
+                      flex flex-col
+                      bg-slate-400
+                      rounded-3xl
+                      shadow-2xl
+                      overflow-hidden
+                      flex-1
+                    ">
+        <Header
         user={user}
         onOpenSearch={() => setSearchModalOpen(true)}
         onOpenAddOrder={handleOpenAddOrder}
         onOpenLogin={() => setLoginModalOpen(true)}
         onLogout={logout}
         orderCount={activeOrderCount}
-      />                                                                                                        {/* Header Component */}
-
-      <div className="
-                    bg-gray-300
-                    border-b border-gray-100 
-                    rounded-2xl 
-                    mx-0 md:mx-4 my-2 md:my-2
-                  "
-      >                                                                                                         {/* Quick Stats Bar */}
-        <div className="max-w-7xl mx-auto px-4 py-3">
+      />                                                                                                        {/* Header Component */}                                                                                 
+        
+        <div className="max-w-7xl mx-auto px-4 py-3">                                                           {/* Quick Stats Bar */}
           <div className="flex items-center justify-between gap-4 overflow-x-auto">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2"> 
@@ -217,12 +219,9 @@ const AppLayout: React.FC = () => {
                   </span>
               </div>
             </div>
-            <div className="text-xs text-gray-400 hidden md:block">
-              Drag cards to move between stages
-            </div>
           </div>
         </div>
-      </div>
+      
 
       <main className="flex-1 overflow-hidden">                                                                {/* Main Content */}
         {error && (
@@ -261,8 +260,8 @@ const AppLayout: React.FC = () => {
 
         {/* Login Prompt Banner removed — header handles sign-in */}
 
-        <div className="mx-0 md:mx-4 my-2 md:my-2 h-[92%]"> 
-          <div className="max-w-7xl mx-auto h-full px-4">
+        <div className="mx-0 md:mx-4 my-2 md:my-2 h-[96%] px-3"> 
+          <div className="max-w-7xl mx-auto h-full">
             <KanbanBoard
               orders={orders}
               onMoveOrder={handleMoveOrder}
@@ -374,6 +373,7 @@ const AppLayout: React.FC = () => {
       )}
 
       {/* Footer removed — app content adapts to viewport */}
+      </div>
 
       {/* Modals */}
       <AddOrderModal

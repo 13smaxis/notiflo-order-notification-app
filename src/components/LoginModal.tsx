@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, LogIn, Mail, Lock, Beef } from 'lucide-react';
+import { X, LogIn, Mail, Lock, BellRing } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -55,10 +55,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-700 to-red-700 px-6 py-8 text-center">
           <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Beef className="w-10 h-10 text-white" />
+            <BellRing className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Chamdor Meat Supply</h1>
-          <p className="text-white/80 mt-1">Order Tracing System</p>
+          <h1 className="text-2xl font-bold text-white">NotiFlo</h1>
+          <p className="text-white/80 mt-1">Less noise. More signal</p>
         </div>
 
         {/* Close button */}
@@ -88,7 +88,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="smaxis-004@outlook.com"
+                placeholder="you@example.com"
                 className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-amber-500 focus:ring-0 outline-none transition-colors"
                 autoFocus
               />

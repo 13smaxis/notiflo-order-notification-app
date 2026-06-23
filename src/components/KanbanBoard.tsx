@@ -10,6 +10,11 @@ interface KanbanBoardProps
   loading: boolean;
 }
 
+/*
+ * StageIcon component renders the appropriate icon for each order stage.
+ * It uses the lucide-react icons for visual representation.
+ * The icon size can be customized via the className prop.
+ */
 const StageIcon: React.FC<{ stage: OrderStage; className?: string }> = ({ stage, className }) => {
   const iconClass = className || 'w-5 h-5';
   switch (stage) {
@@ -26,13 +31,18 @@ const StageIcon: React.FC<{ stage: OrderStage; className?: string }> = ({ stage,
   }
 };
 
+/*
+ * KanbanBoard component renders the entire Kanban board with all stages and their respective orders.
+ * It handles drag-and-drop functionality for moving orders between stages.
+ * Manages the visibility of collected orders, ensuring they are only displayed for 5 minutes after collection.
+ */
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading }) => {
   const [dragTargetStage, setDragTargetStage] = useState<OrderStage | null>(null);
   const [draggedOrderId, setDraggedOrderId] = useState<string | null>(null);
   const [visibleCollectedOrders, setVisibleCollectedOrders] = useState<Set<string>>(new Set());
 
-  // Filter collected orders that should still be visible (within 5 minutes)
-  useEffect(() => {
+  
+  useEffect(() => {                                                                                             //-Filter collected orders that should still be visible (within 5 minutes)
     const checkCollectedOrders = () => {
       const now = Date.now();
       const fiveMinutes = 5 * 60 * 1000;
