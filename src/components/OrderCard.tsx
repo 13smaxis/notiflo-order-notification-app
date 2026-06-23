@@ -62,12 +62,12 @@ const GrillTimer: React.FC<{ startTime: string; pausedTime?: string; accumulated
   };
 
   return (
-    <div className={`flex items-center gap-1 ${getTimerColor()} px-1.5 py-1 rounded-lg font-mono text-xs font-bold`}>
-      <Timer className={`w-2.5 h-2.5 ${pausedTime ? '' : 'animate-pulse'}`} />
+    <div className={`flex items-center gap-0.5 ${getTimerColor()} px-1 py-0.5 rounded-lg font-mono text-[8px] font-bold`}>
+      <Timer className={`w-2 h-2 ${pausedTime ? '' : 'animate-pulse'}`} />
       <span className="tabular-nums">
         {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </span>
-      {pausedTime && <span className="text-xs ml-0.5">⏸</span>}
+      {pausedTime && <span className="text-[7px] ml-0.5">⏸</span>}
     </div>
   );
 };
@@ -122,58 +122,58 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, isDragging })
   return (
     <div
       className={`
-        bg-white rounded-xl
+        bg-white rounded-lg
         overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-300
         select-none touch-manipulation
-        shadow-lg hover:shadow-2xl hover:-translate-y-1
-        ${isDragging ? 'shadow-2xl scale-105 rotate-1 opacity-95 z-50' : ''}
+        shadow-md hover:shadow-lg hover:-translate-y-0.5
+        ${isDragging ? 'shadow-lg scale-105 rotate-1 opacity-95 z-50' : ''}
       `}
     >
       {/* Top accent bar */}
-      <div className={`h-1 bg-gradient-to-r ${getAccentGradient()}`} />
+      <div className={`h-0.5 bg-gradient-to-r ${getAccentGradient()}`} />
       
-      <div className="p-2">
+      <div className="p-1.5">
         {/* Header with order number */}
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-base font-black text-gray-800 font-mono tracking-tight">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-sm font-black text-gray-800 font-mono tracking-tight">
             #{order.order_number}
           </span>
-          <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${stageConfig?.bgColor} ${stageConfig?.color}`}>
-            <StageIcon stage={order.stage} className="w-2.5 h-2.5" />
-            <span>{stageConfig?.title}</span>
+          <div className={`flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${stageConfig?.bgColor} ${stageConfig?.color}`}>
+            <StageIcon stage={order.stage} className="w-2 h-2" />
+            <span className="hidden sm:inline">{stageConfig?.title}</span>
           </div>
         </div>
 
         {/* Order details */}
-        <div className="space-y-0.5 mb-1.5">
-          <div className="flex items-center gap-1.5 text-gray-600 text-xs">
-            <Calendar className="w-2.5 h-2.5 flex-shrink-0" />
+        <div className="space-y-0.25 mb-1">
+          <div className="flex items-center gap-1 text-gray-600 text-[10px]">
+            <Calendar className="w-2 h-2 flex-shrink-0" />
             <span>{formatDate(order.created_at)}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-gray-600 text-xs">
-            <Phone className="w-2.5 h-2.5 flex-shrink-0" />
-            <span className="font-medium truncate">{order.customer_phone}</span>
+          <div className="flex items-center gap-1 text-gray-600 text-[10px]">
+            <Phone className="w-2 h-2 flex-shrink-0" />
+            <span className="font-medium truncate text-[9px]">{order.customer_phone}</span>
           </div>
         </div>
 
         {/* Amount */}
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg px-2 py-1.5 mb-1.5 border border-amber-100">
-          <span className="text-lg font-black text-amber-800 font-mono tracking-tight">
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg px-1.5 py-1 mb-1 border border-amber-100">
+          <span className="text-xs font-black text-amber-800 font-mono tracking-tight">
             {formatCurrency(order.total_amount)}
           </span>
         </div>
 
         {/* Timers */}
-        <div className="space-y-1 mb-1.5">
+        <div className="space-y-0.5 mb-0.5">
           {/* Previous grill time (paused) */}
           {order.previous_grill_ms > 0 && (
-            <div className="flex items-center gap-1 text-gray-600 bg-gray-100 border border-gray-300 px-1.5 py-1 rounded-lg font-mono text-xs">
-              <Timer className="w-2.5 h-2.5" />
-              <span className="text-[10px] opacity-60">Previous:</span>
+            <div className="flex items-center gap-0.5 text-gray-600 bg-gray-100 border border-gray-300 px-1 py-0.5 rounded-lg font-mono text-[8px]">
+              <Timer className="w-2 h-2" />
+              <span className="text-[8px] opacity-60">Prev:</span>
               <span className="font-bold tabular-nums">
                 {String(Math.floor(order.previous_grill_ms / 60000)).padStart(2, '0')}:{String(Math.floor((order.previous_grill_ms % 60000) / 1000)).padStart(2, '0')}
               </span>
-              <span className="text-xs">⏸</span>
+              <span className="text-[8px]">⏸</span>
             </div>
           )}
           {/* Current grill timer */}
@@ -188,8 +188,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, isDragging })
         </div>
 
         {/* Drag hint */}
-        <div className="text-center text-xs text-gray-400 pt-0.5">
-          ✋ Drag
+        <div className="text-center text-[8px] text-gray-400 pt-0.25">
+          ✋
         </div>
       </div>
     </div>

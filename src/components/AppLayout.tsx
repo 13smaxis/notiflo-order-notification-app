@@ -261,7 +261,7 @@ const AppLayout: React.FC = () => {
 
         {/* Login Prompt Banner removed — header handles sign-in */}
 
-        <div className="mx-0 md:mx-4 my-2 md:my-2 h-full">
+        <div className="mx-0 md:mx-4 my-2 md:my-2 h-[92%]"> 
           <div className="max-w-7xl mx-auto h-full px-4">
             <KanbanBoard
               orders={orders}
