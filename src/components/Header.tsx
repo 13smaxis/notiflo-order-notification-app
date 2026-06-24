@@ -32,14 +32,14 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between h-24 md:h-28">                                        {/* Header Content */}
          <div className="flex items-center gap-3">
           <div className="
-                          h-14 w-28
-                          sm:h-16 sm:w-32
-                          md:h-20 md:w-40
+                          h-16 w-32
+                          sm:h-20 sm:w-40
+                          md:h-24 md:w-48
                           flex-shrink-0
                           overflow-hidden
                           relative
                         "
-          >
+          >                                                                                                     {/* Logo Container */}
             <img
               src="/logo.png"
               alt="NotiFlo logo"
@@ -53,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({
           
 
           <div className="hidden md:flex items-center gap-4">                                                   {/* Desktop Navigation container*/}
-            <div className="bg-slate-700/50 rounded-xl px-4 py-2 flex items-center gap-3">                    {/* Order Stats */}
+            <div className="bg-slate-700/50 rounded-xl px-4 py-2 flex items-center gap-3">                    {/* Active Order Stats */}
               <div className="text-center">
                 <p className="text-2xl font-bold text-amber-400">
                   {orderCount}
@@ -152,25 +152,59 @@ const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          <div className="flex flex-nowrap items-center gap-2 min-w-0 md:hidden">                                        {/* Mobile Navigation container*/}
-            <div className="rounded-2xl bg-slate-700/50 px-3 py-2 text-amber-400 font-semibold text-sm">
-              {orderCount}
-            </div>
-
+          <div className="
+                            flex flex-nowrap 
+                            items-center 
+                            gap-2 
+                            min-w-0 
+                            md:hidden
+                          "
+          >                                                                                                     {/* Mobile Navigation container*/}
             <button
               onClick={onOpenSearch}
-              className="p-3 rounded-2xl bg-slate-700 hover:bg-slate-600 transition-colors"
-            >
+              className="
+                          px-3
+                  
+                          transition-colors
+                        "
+            >                                                                                                   {/* Search Button */}
               <Search className="w-5 h-5" />
             </button>
+                                                                                                                 
+            <div className="
+                              flex
+                              text-amber-400 
+                              font-semibold text-sm
+                              justify-center
+                            "
+            >                                                                                                   {/* Order Count total */}
+              <div className="text-center">
+                <p className="text-2xl font-bold text-amber-400">
+                  {orderCount}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Active Orders
+                </p>
+              </div>
+            </div>
+
+
 
             <button
               onClick={onOpenLogin}
-              className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-700 hover:bg-slate-600 transition-colors"
+              className="
+                          flex items-center 
+                          gap-2 
+                          px-3 py-2 
+                          rounded-2xl 
+                          bg-slate-700 
+                          hover:bg-slate-600 
+                          transition-colors
+                        "
             >
               <User className="w-5 h-5" />
-              <span className="text-sm font-medium truncate max-w-[4rem]">
-                {user ? user.full_name.charAt(0).toUpperCase() : 'Sign In'}
+                <span className="text-sm font-medium truncate max-w-[4rem]">
+                  {user ? user.full_name.charAt(0).toUpperCase() : 'Sign In'}
               </span>
             </button>
           </div>
