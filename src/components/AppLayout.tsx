@@ -168,7 +168,6 @@ const AppLayout: React.FC = () => {
                       flex flex-col
                       bg-slate-400
                       rounded-3xl
-                    
                       overflow-hidden
                       flex-1
                     "
@@ -233,7 +232,7 @@ const AppLayout: React.FC = () => {
         </div>
 
 
-        <main className="flex-1 overflow-hidden">                                                                 {/* Main Content */}
+        <main className="flex-1 overflow-hidden">                                                               {/* Main Content */}
           {error && (
             <div className="
                           m-4 
@@ -261,20 +260,20 @@ const AppLayout: React.FC = () => {
                           flex items-center 
                           gap-2
                         "
-              >                                                                                                   {/* Retry Button */}
+              >                                                                                                 {/* Retry Button */}
                 <RefreshCw className="w-4 h-4" />
                 Retry
               </button>
             </div>
           )}
 
-          <div className="mx-0 md:mx-4 my-2 md:my-2 h-[96%] px-3">                                                {/* Login Prompt Banner removed — header handles sign-in */}
-            <div className="max-w-7xl mx-auto h-full">                                                            {/* Kanban Board Container */}
+          <div className="mx-0 md:mx-4 my-2 md:my-2 h-[96%] px-3">                                              {/* Login Prompt Banner removed — header handles sign-in */}
+            <div className="max-w-7xl mx-auto h-full">                                                          {/* Kanban Board Container */}
               <KanbanBoard
                 orders={orders}
                 onMoveOrder={handleMoveOrder}
                 loading={loading}
-              />                                                                                                  {/* Calls the Kanban Board Component */}
+              />                                                                                                {/* Calls the Kanban Board Component */}
             </div>
           </div>
 
@@ -282,7 +281,7 @@ const AppLayout: React.FC = () => {
           * true && true && JSX, if any condition is false, react renders nothing 
           */}
           {!loading && orders.length === 0 && (
-            <div className="text-center py-16 px-4">                                                              {/* Centered container for empty state */}
+            <div className="text-center py-16 px-4">                                                            {/* Centered container for empty state */}
               <div className="
                               w-28 h-28 
                               bg-gradient-to-br from-amber-100 to-orange-100 
@@ -310,7 +309,7 @@ const AppLayout: React.FC = () => {
                   />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-slate-700 mb-2">No orders yet</h2>                         {/* Heading for empty state */}
+              <h2 className="text-2xl font-bold text-slate-700 mb-2">No orders yet</h2>                       {/* Heading for empty state */}
               <p className="text-slate-500 mb-6 max-w-md mx-auto">
                 Start by adding your first order.
                 Orders will appear on the board and can be moved through each stage as they progress.

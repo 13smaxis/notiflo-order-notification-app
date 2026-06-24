@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, LogOut, User, Beef, Menu, X } from 'lucide-react';
+import { Search, Plus, LogOut, User } from 'lucide-react';
 import { Staff } from '@/types/order';
 
 interface HeaderProps {
@@ -19,8 +19,6 @@ const Header: React.FC<HeaderProps> = ({
   onLogout,
   orderCount
 }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-
   return (
     <header className="
                         bg-gradient-to-r from-slate-800 to-slate-900 
@@ -34,9 +32,9 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between h-24 md:h-28">                                        {/* Header Content */}
          <div className="flex items-center gap-3">
           <div className="
-                          h-32 w-80          
-                          sm:h-36 sm:w-88    
-                          md:h-48 md:w-112   
+                          h-14 w-28
+                          sm:h-16 sm:w-32
+                          md:h-20 md:w-40
                           flex-shrink-0
                           overflow-hidden
                           relative
@@ -46,9 +44,7 @@ const Header: React.FC<HeaderProps> = ({
               src="/logo.png"
               alt="NotiFlo logo"
               className="
-                          absolute
-                          h-[240%] w-[240%]
-                          -top-[65%] -left-[0%]
+                          h-full w-full
                           object-contain
                         "
             />
@@ -156,91 +152,29 @@ const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="
-                        md:hidden p-2 
-                        hover:bg-slate-700 
-                        rounded-lg 
-                        transition-colors
-                      "
-          >                                                                                                     {/* Mobile Menu Button */}
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-slate-700 space-y-3">
-            
-            <div className="bg-slate-700/50 rounded-xl px-4 py-3 flex items-center justify-between">          {/* Order Stats */}
-              <span className="text-slate-300">Active Orders</span>
-              <span className="text-xl md:text-2xl font-bold text-amber-400">{orderCount}</span>
+          <div className="flex flex-nowrap items-center gap-2 min-w-0 md:hidden">                                        {/* Mobile Navigation container*/}
+            <div className="rounded-2xl bg-slate-700/50 px-3 py-2 text-amber-400 font-semibold text-sm">
+              {orderCount}
             </div>
 
-            {/* Search Button */}
             <button
-              onClick={() => {
-                onOpenSearch();
-                setMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center gap-3 px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl transition-colors"
+              onClick={onOpenSearch}
+              className="p-3 rounded-2xl bg-slate-700 hover:bg-slate-600 transition-colors"
             >
               <Search className="w-5 h-5" />
-              <span className="font-medium">Search Orders</span>
             </button>
 
-            {/* Add Order Button */}
-            {user && (
-              <button
-                onClick={() => {
-                  onOpenAddOrder();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-xl transition-all shadow-lg font-semibold"
-              >
-                <Plus className="w-5 h-5" />
-                <span>New Order</span>
-              </button>
-            )}
-
-            {/* User Section */}
-            {user ? (
-              <div className="flex items-center justify-between px-4 py-3 bg-slate-700/50 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{user.full_name}</p>
-                    <p className="text-xs text-slate-400">{user.role}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    onLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="p-2 hover:bg-slate-600 rounded-lg transition-colors"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  onOpenLogin();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl transition-colors font-semibold"
-              >
-                <User className="w-5 h-5" />
-                <span>Sign In</span>
-              </button>
-            )}
+            <button
+              onClick={onOpenLogin}
+              className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-700 hover:bg-slate-600 transition-colors"
+            >
+              <User className="w-5 h-5" />
+              <span className="text-sm font-medium truncate max-w-[4rem]">
+                {user ? user.full_name.charAt(0).toUpperCase() : 'Sign In'}
+              </span>
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </header>
   );
