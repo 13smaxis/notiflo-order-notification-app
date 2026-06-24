@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Order, OrderStage, STAGES } from '@/types/order';
 import { Clock, Flame, CheckCircle, ShoppingBag, Phone, Calendar, Timer } from 'lucide-react';
 
-interface OrderCardProps {
+interface OrderCardProps 
+{
   order: Order;
   onMoveOrder: (orderId: string, newStage: OrderStage) => void;
   isDragging?: boolean;
@@ -24,7 +25,8 @@ const StageIcon: React.FC<{ stage: OrderStage; className?: string }> = ({ stage,
   }
 };
 
-const GrillTimer: React.FC<{ startTime: string; pausedTime?: string; accumulatedMs?: number; isOnGrill?: boolean }> = ({ startTime, pausedTime, accumulatedMs = 0, isOnGrill = false }) => {
+const GrillTimer: React.FC<{ startTime: string; pausedTime?: string; accumulatedMs?: number; isOnGrill?: boolean }> 
+                  = ({ startTime, pausedTime, accumulatedMs = 0, isOnGrill = false }) => {
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -62,7 +64,12 @@ const GrillTimer: React.FC<{ startTime: string; pausedTime?: string; accumulated
   };
 
   return (
-    <div className={`flex items-center gap-0.5 ${getTimerColor()} px-1 py-0.5 rounded-lg font-mono text-[8px] font-bold`}>
+    <div className={`
+                      flex items-center 
+                      gap-0.5 
+                      ${getTimerColor()} px-1 py-0.5 rounded-lg font-mono text-[8px] font-bold
+                    `}
+    >
       <Timer className={`w-2 h-2 ${pausedTime ? '' : 'animate-pulse'}`} />
       <span className="tabular-nums">
         {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
@@ -103,22 +110,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, isDragging })
     }).format(amount);
   };
 
-  // Get stage-specific accent color
-  const getAccentGradient = () => {
-    switch (order.stage) {
-      case 'queue':
-        return 'from-slate-500 to-slate-600';
-      case 'grill':
-        return 'from-orange-500 to-red-500';
-      case 'ready':
-        return 'from-green-500 to-emerald-600';
-      case 'collected':
-        return 'from-blue-500 to-indigo-600';
-      default:
-        return 'from-gray-500 to-gray-600';
-    }
-  };
-
   return (
     <div
       className={`
@@ -129,50 +120,88 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, isDragging })
         ${isDragging ? 'shadow-lg scale-105 rotate-1 opacity-95 z-50' : ''}
       `}
     >
-      {/* Top accent bar */}
-      <div className={`h-0.5 bg-gradient-to-r ${getAccentGradient()}`} />
-      
-      <div className="p-1.5">
-        {/* Header with order number */}
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-sm font-black text-gray-800 font-mono tracking-tight">
-            #{order.order_number}
+
+      <div className="p-1.5 sm:p-2">
+        <div className="flex items-center justify-between mb-1">                                                {/* Header with order number */}
+          <span className="
+                            text-xs 
+                            sm:text-sm 
+                            font-black 
+                            text-gray-800 font-mono 
+                            tracking-tight
+                          "
+          >
+              #{order.order_number}
           </span>
-          <div className={`flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${stageConfig?.bgColor} ${stageConfig?.color}`}>
+          <div className={`
+                            flex items-center 
+                            gap-0.5 
+                            px-1 py-0.5 
+                            rounded-full 
+                            text-[9px] 
+                            sm:text-[10px] font-bold uppercase 
+                            tracking-wider 
+                            ${stageConfig?.bgColor} ${stageConfig?.color}
+                          `}
+          >
             <StageIcon stage={order.stage} className="w-2 h-2" />
-            <span className="hidden sm:inline">{stageConfig?.title}</span>
+              <span className="hidden sm:inline">
+                {stageConfig?.title}
+              </span>
           </div>
         </div>
 
-        {/* Order details */}
-        <div className="space-y-0.25 mb-1">
+        <div className="space-y-0.25 mb-1">                                                                     {/* Order details */}
           <div className="flex items-center gap-1 text-gray-600 text-[10px]">
             <Calendar className="w-2 h-2 flex-shrink-0" />
-            <span>{formatDate(order.created_at)}</span>
+              <span>
+                {formatDate(order.created_at)}
+              </span>
           </div>
           <div className="flex items-center gap-1 text-gray-600 text-[10px]">
             <Phone className="w-2 h-2 flex-shrink-0" />
-            <span className="font-medium truncate text-[9px]">{order.customer_phone}</span>
+              <span className="font-medium truncate text-[9px]">
+                {order.customer_phone}
+              </span>
           </div>
         </div>
 
-        {/* Amount */}
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg px-1.5 py-1 mb-1 border border-amber-100">
+        <div className="
+                        bg-gradient-to-br 
+                        from-amber-50 to-orange-50 
+                        rounded-lg 
+                        px-1.5 py-1 
+                        mb-1 
+                        border border-amber-100
+                      "
+        >                                                                                                       {/* Amount */}
           <span className="text-xs font-black text-amber-800 font-mono tracking-tight">
             {formatCurrency(order.total_amount)}
           </span>
         </div>
 
-        {/* Timers */}
-        <div className="space-y-0.5 mb-0.5">
-          {/* Previous grill time (paused) */}
+        
+        <div className="space-y-0.5 mb-0.5">                                                                    {/* Timers */}
+          {/* Previous preparing time (paused) */}
           {order.previous_grill_ms > 0 && (
-            <div className="flex items-center gap-0.5 text-gray-600 bg-gray-100 border border-gray-300 px-1 py-0.5 rounded-lg font-mono text-[8px]">
+            <div className="
+                            flex items-center 
+                            gap-0.5 
+                            text-gray-600 
+                            bg-gray-100 
+                            border border-gray-300 
+                            px-1 py-0.5 
+                            rounded-lg 
+                            font-mono 
+                            text-[8px]
+                          "
+            >
               <Timer className="w-2 h-2" />
-              <span className="text-[8px] opacity-60">Prev:</span>
-              <span className="font-bold tabular-nums">
-                {String(Math.floor(order.previous_grill_ms / 60000)).padStart(2, '0')}:{String(Math.floor((order.previous_grill_ms % 60000) / 1000)).padStart(2, '0')}
-              </span>
+                <span className="text-[8px] opacity-60">Prev:</span>
+                  <span className="font-bold tabular-nums">
+                      {String(Math.floor(order.previous_grill_ms / 60000)).padStart(2, '0')}:
+                      {String(Math.floor((order.previous_grill_ms % 60000) / 1000)).padStart(2, '0')}
+                  </span>
               <span className="text-[8px]">⏸</span>
             </div>
           )}
@@ -185,11 +214,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, isDragging })
               isOnGrill={true}
             />
           )}
-        </div>
-
-        {/* Drag hint */}
-        <div className="text-center text-[8px] text-gray-400 pt-0.25">
-          ✋
         </div>
       </div>
     </div>
