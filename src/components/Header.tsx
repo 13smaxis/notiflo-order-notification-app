@@ -51,9 +51,26 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
           
-
           <div className="hidden md:flex items-center gap-4">                                                   {/* Desktop Navigation container*/}
-            <div className="bg-slate-700/50 rounded-xl px-4 py-2 flex items-center gap-3">                    {/* Active Order Stats */}
+                        <button
+              onClick={onOpenSearch}
+              className="
+                          flex items-center 
+                          gap-2 px-4 py-2.5 
+ transition-colors"
+            >                                                                                                   {/* Search Button */}
+                <Search className="w-5 h-5" />
+            
+            </button>
+
+            <div className="
+                            bg-slate-700/50 
+                            rounded-xl 
+                            px-4 py-2 
+                            flex items-center 
+                            gap-3
+                          "
+            >                                                                                                   {/* Active Order Stats */}
               <div className="text-center">
                 <p className="text-2xl font-bold text-amber-400">
                   {orderCount}
@@ -64,39 +81,7 @@ const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
             
-            <button
-              onClick={onOpenSearch}
-              className="
-                          flex items-center 
-                          gap-2 px-4 py-2.5 
-                          bg-slate-700 
-                          hover:bg-slate-600 
-                          rounded-xl transition-colors"
-            >                                                                                                   {/* Search Button */}
-                <Search className="w-5 h-5" />
-              <span className="font-medium">
-                Search
-              </span>
-            </button>
 
-            {user && (
-              <button
-                onClick={onOpenAddOrder}
-                className="
-                            flex items-center 
-                            gap-2 px-4 py-2.5 
-                            bg-gradient-to-r from-amber-500 to-orange-500 
-                            hover:from-amber-600 hover:to-orange-600 
-                            rounded-xl 
-                            transition-all 
-                            shadow-lg 
-                            hover:shadow-xl 
-                            font-semibold"
-              >                                                                                                 {/* Add Order Button */}
-                <Plus className="w-5 h-5" />
-                <span>New Order</span>
-              </button>
-            )}
 
             {user ? (
               <div className="
@@ -139,7 +124,7 @@ const Header: React.FC<HeaderProps> = ({
                             gap-2 px-4 py-2.5 
                             bg-white text-slate-800 
                             hover:bg-slate-100 
-                            rounded-xl 
+                            rounded-full 
                             transition-colors 
                             font-semibold
                           "
@@ -164,7 +149,6 @@ const Header: React.FC<HeaderProps> = ({
               onClick={onOpenSearch}
               className="
                           px-3
-                  
                           transition-colors
                         "
             >                                                                                                   {/* Search Button */}
@@ -182,13 +166,11 @@ const Header: React.FC<HeaderProps> = ({
                 <p className="text-2xl font-bold text-amber-400">
                   {orderCount}
                 </p>
-                <p className="text-xs text-slate-400">
+                <p className="text-[0.5rem] text-slate-400">
                   Active Orders
                 </p>
               </div>
             </div>
-
-
 
             <button
               onClick={onOpenLogin}
@@ -210,6 +192,16 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       </div>
+
+      {user && (
+        <button
+          onClick={onOpenAddOrder}
+          className="hidden md:flex fixed bottom-6 right-6 z-50 h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 shadow-2xl transition hover:from-amber-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-amber-400"
+          title="Add Order"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
     </header>
   );
 };

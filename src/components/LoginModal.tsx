@@ -63,19 +63,22 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
        
         <div className="bg-gradient-to-r from-amber-700 to-red-700 px-6 py-8 text-center">                  {/* Header */}
           <div className="
-                            w-20 h-20 
-                            bg-white/20 
+                            w-28 h-28 
+                            bg-gradient-to-r from-slate-800 to-slate-900
                             rounded-full 
                             flex 
                             items-center 
                             justify-center 
                             mx-auto mb-4
+                            overflow-hidden
                           "
-          >                                                                                                     {/* Icon Background */}
-            <BellRing className="w-10 h-10 text-white" />
+          >                                                                                                     {/* Logo Background */}
+            <img
+              src="/logo.png"
+              alt="NotiFlo logo"
+              className="h-full w-full object-contain"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-white">NotiFlo</h1>
-          <p className="text-white/80 mt-1">Less noise. More signal</p>
         </div>
 
         {/* Close button */}
