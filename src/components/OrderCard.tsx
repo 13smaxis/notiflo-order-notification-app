@@ -115,7 +115,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, isDragging })
       className={`
         bg-white rounded-lg
         overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-300
-        select-none touch-manipulation
+        select-none touch-none
         shadow-md hover:shadow-lg hover:-translate-y-0.5
         ${isDragging ? 'shadow-lg scale-105 rotate-1 opacity-95 z-50' : ''}
       `}
