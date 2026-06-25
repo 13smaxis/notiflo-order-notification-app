@@ -96,7 +96,7 @@ const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ o
       {...attributes}
       {...listeners}
       className={`transition-all duration-200 cursor-grab active:cursor-grabbing ${
-        isDragging || isDragActive ? 'opacity-40 scale-95' : ''
+        isDragging || isDragActive ? 'opacity-0' : ''
       }`}
     >
       <OrderCard order={order} onMoveOrder={() => {}} isDragging={isDragging || isDragActive} />
@@ -123,7 +123,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 150,
+        delay: 75,
         tolerance: 5,
       },
     })
