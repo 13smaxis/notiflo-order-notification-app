@@ -1,4 +1,4 @@
-// Service Worker for Chamdor Meat Supply Order Tracing
+// Service Worker for Notiflo Order Notification App
 /*
  * This service worker implements a network-first caching strategy. 
  * It tries to fetch the latest content from the network first. 
@@ -6,7 +6,7 @@
  * This ensures that users get the most up-to-date information when they are online, 
  *  while still providing access to previously loaded content when they are offline.
  */
-const CACHE_NAME = 'chamdor-order-tracking-v1';
+const CACHE_NAME = 'notiflo-order-tracking-v1';
 const urlsToCache = [
   '/',
   '/index.html',

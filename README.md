@@ -1,21 +1,15 @@
-# Chamdor Meat Supply App (Vite + React + TS)
+# Notiflo Order Notification App (Vite + React + TS)
 
 ## Project Structure
 
 ```
-order-tracking-app/
+notiflo-order-notification-app/
 ├── public/
 │   ├── manifest.json          # PWA manifest
 │   ├── robots.txt             # SEO robots file
 │   └── sw.js                  # Service worker for PWA
 ├── src/
 │   ├── components/
-│   │   ├── ui/                # shadcn/ui components
-│   │   │   ├── button.tsx
-│   │   │   ├── card.tsx
-│   │   │   ├── dialog.tsx
-│   │   │   ├── input.tsx
-│   │   │   └── ...            # Other UI primitives
 │   │   ├── AddOrderModal.tsx  # Modal for creating new orders
 │   │   ├── AppLayout.tsx      # Main app layout with header
 │   │   ├── Header.tsx         # Header component
@@ -23,7 +17,8 @@ order-tracking-app/
 │   │   ├── LoginModal.tsx     # Authentication modal
 │   │   ├── OrderCard.tsx      # Order card with timer
 │   │   ├── SearchModal.tsx    # Search orders modal
-│   │   └── theme-provider.tsx # Dark/light theme provider
+│   │   ├── theme-provider.tsx # Dark/light theme provider
+│   │   └── ui/                # shadcn/ui components
 │   ├── contexts/
 │   │   └── AppContext.tsx     # Global app state context
 │   ├── hooks/
@@ -60,7 +55,7 @@ order-tracking-app/
 
 ## Demo Mode (Local DB)
 
-The app now supports a local demo database backed by `localStorage` with seeded orders. This allows running the app without any backend.
+The app supports a local demo database backed by `localStorage` with seeded orders. This allows running the app without any backend while preserving the same UI and order flow.
 
 - In development, demo mode is enabled by default. To force it explicitly, set:
 
@@ -75,7 +70,9 @@ VITE_USE_LOCAL_DB=true
 - Password: `demo2024`
 
 ### Scripts
-- Install: `npm install --legacy-peer-deps`
+- Install: `npm install`
 - Dev: `npm run dev`
+- Build: `npm run build`
+- Preview: `npm run preview`
 
 The board will show seeded orders across Queue, Grill, Ready, and Collected. Add, move, search, and delete are all persisted locally.

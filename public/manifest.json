@@ -1,7 +1,7 @@
 {
-  "name": "Chamdor Meat Supply Order Tracing",
-  "short_name": "Chamdor Orders",
-  "description": "Order tracing system for Chamdor Meat Supply - track orders from queue to collection",
+  "name": "Notiflo Order Notification App",
+  "short_name": "Notiflo Orders",
+  "description": "Order notification system for Notiflo - track orders from queue to collection",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e293b",

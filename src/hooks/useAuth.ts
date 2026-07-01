@@ -17,7 +17,7 @@ export function useAuth() {
 
   useEffect(() => {
     // Check for stored user on mount
-    const storedUser = localStorage.getItem('chamdor_user');
+    const storedUser = localStorage.getItem('notiflo_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -37,7 +37,7 @@ export function useAuth() {
           last_login: new Date().toISOString()
         };
         setUser(demoUser);
-        localStorage.setItem('chamdor_user', JSON.stringify(demoUser));
+        localStorage.setItem('notiflo_user', JSON.stringify(demoUser));
         return { user: demoUser, error: null };
       } catch (err: any) {
         return { user: null, error: err.message };
@@ -66,9 +66,9 @@ export function useAuth() {
             .single();
 
           if (createError) throw createError;
-          
+
           setUser(newStaff);
-          localStorage.setItem('chamdor_user', JSON.stringify(newStaff));
+          localStorage.setItem('notiflo_user', JSON.stringify(newStaff));
           return { user: newStaff, error: null };
         }
         throw new Error('Invalid credentials');
@@ -86,7 +86,7 @@ export function useAuth() {
         .eq('id', staffData.id);
 
       setUser(staffData);
-      localStorage.setItem('chamdor_user', JSON.stringify(staffData));
+      localStorage.setItem('notiflo_user', JSON.stringify(staffData));
       return { user: staffData, error: null };
     } catch (err: any) {
       return { user: null, error: err.message };
@@ -95,7 +95,7 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem('chamdor_user');
+    localStorage.removeItem('notiflo_user');
   }, []);
 
   return {

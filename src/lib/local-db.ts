@@ -1,7 +1,7 @@
 import { Order, OrderStage } from '@/types/order';
 
-const ORDERS_KEY = 'chamdor_local_orders';
-const SEEDED_KEY = 'chamdor_local_seeded_v1';
+const ORDERS_KEY = 'notiflo_local_orders';
+const SEEDED_KEY = 'notiflo_local_seeded_v1';
 
 function nowISO() {
   return new Date().toISOString();

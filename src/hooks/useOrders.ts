@@ -2,15 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Order, OrderStage } from '@/types/order';
 
-export function useOrders() 
-{
+export function useOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
-    try 
-    {
+    try {
       setLoading(true);
       const { data, error } = await supabase
         .from('orders')
@@ -19,33 +17,29 @@ export function useOrders()
 
       if (error) throw error;
       setOrders(data || []);
-    } 
-    catch (err: any) 
-    {
+    }
+    catch (err: any) {
       setError(err.message);
-    } 
-    finally 
-    {
+    }
+    finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    
+
     fetchOrders();                                                                                              //-Calles the method that brings back all the orders
-    
+
     const channel = supabase                                                                                    //-Set up real-time subscription
       .channel('orders-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
-          if (payload.eventType === 'INSERT') 
-          {
+          if (payload.eventType === 'INSERT') {
             setOrders((prev) => [payload.new as Order, ...prev]);
-          } 
-          else if (payload.eventType === 'UPDATE') 
-          {
+          }
+          else if (payload.eventType === 'UPDATE') {
             setOrders((prev) =>
               prev.map((order) =>
                 order.id === payload.new.id ? (payload.new as Order) : order
@@ -157,8 +151,7 @@ export function useOrders()
   };
 
   const deleteOrder = async (orderId: string) => {
-    try 
-    {
+    try {
       const { error } = await supabase
         .from('orders')
         .delete()
