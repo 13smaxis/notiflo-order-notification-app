@@ -1,10 +1,18 @@
+
 import { createClient } from '@supabase/supabase-js';
 
+/*
+ * This file is used to create a Supabase client instance that can be used throughout the application.
+ * It reads the Supabase URL and anonymous key from environment variables, and throws an error if they are missing.
+ * The client is then exported for use in other parts of the application. 
+ */
+const _meta: any = import.meta;
+const supabaseUrl = _meta.env?.VITE_SUPABASE_URL || 'https://tztkclxftbzdcuidvtag.supabase.co';
+const supabaseKey = _meta.env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_gHWvFjJO1w6IVhmGWpn90A_8wECybXb';
 
-// Initialize database client
-const supabaseUrl = 'https://dzdilgucbxxmhlaeiqfy.databasepad.com';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjQ3Y2Y0MzBlLTk2YjQtNDM3MS04Yjg4LWZiMDcwZDFkOWUyMiJ9.eyJwcm9qZWN0SWQiOiJkemRpbGd1Y2J4eG1obGFlaXFmeSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzY4NDg4MzE0LCJleHAiOjIwODM4NDgzMTQsImlzcyI6ImZhbW91cy5kYXRhYmFzZXBhZCIsImF1ZCI6ImZhbW91cy5jbGllbnRzIn0.y2JwU8dlDZK7p5mVHtjXtE7e9uLfXOEn93XAw6oL4cw';
-const supabase = createClient(supabaseUrl, supabaseKey);
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase credentials in environment variables');
+}
 
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
-export { supabase };
