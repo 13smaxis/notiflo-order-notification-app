@@ -1,108 +1,136 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Staff } from '@/types/order';
+import { Profile } from '@/types/order';
 
-function isLocalMode() {
-  const flag = (import.meta as any).env?.VITE_USE_LOCAL_DB;
-  if (typeof flag === 'string') {
-    return flag.toLowerCase() === 'true';
-  }
-  const mode = (import.meta as any).env?.MODE || (import.meta as any).env?.DEV ? 'development' : 'production';
-  return mode !== 'production';
+export interface AuthUser {
+  auth_user_id: string;
+  email: string;
+  profile: Profile | null;
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<Staff | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Check for existing session on mount
   useEffect(() => {
-    // Check for stored user on mount
-    const storedUser = localStorage.getItem('notiflo_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const checkSession = async () => {
+      try {
+        setLoading(true);
+
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          // Fetch user's profile
+          const { data: profile, error: profileError } = await supabase
+            .from('profile')
+            .select('*')
+            .eq('auth_user_id', session.user.id)
+            .single();
+
+          if (profileError && profileError.code !== 'PGRST116') {
+            throw profileError;
+          }
+
+          setUser({
+            auth_user_id: session.user.id,
+            email: session.user.email || '',
+            profile: profile || null
+          });
+        }
+      } catch (err: any) {
+        console.error('Session check error:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profile')
+          .select('*')
+          .eq('auth_user_id', session.user.id)
+          .single();
+
+        setUser({
+          auth_user_id: session.user.id,
+          email: session.user.email || '',
+          profile: profile || null
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription?.unsubscribe();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    if (isLocalMode()) {
-      try {
-        if (password !== 'demo2024') throw new Error('Invalid credentials');
-        const demoUser: Staff = {
-          id: 'demo-user',
-          email: email.toLowerCase(),
-          full_name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-          role: 'staff',
-          created_at: new Date().toISOString(),
-          last_login: new Date().toISOString()
-        };
-        setUser(demoUser);
-        localStorage.setItem('notiflo_user', JSON.stringify(demoUser));
-        return { user: demoUser, error: null };
-      } catch (err: any) {
-        return { user: null, error: err.message };
-      }
-    }
     try {
-      // Check if staff exists
-      const { data: staffData, error: staffError } = await supabase
-        .from('staff')
+      setError(null);
+      setLoading(true);
+
+      // Sign in with Supabase auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase(),
+        password
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('No user returned from auth');
+
+      // Fetch the user's profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profile')
         .select('*')
-        .eq('email', email.toLowerCase())
+        .eq('auth_user_id', authData.user.id)
         .single();
 
-      if (staffError || !staffData) {
-        // For demo purposes, create a new staff member if they don't exist
-        // In production, you'd want proper authentication
-        if (password === 'demo2024') {
-          const { data: newStaff, error: createError } = await supabase
-            .from('staff')
-            .insert([{
-              email: email.toLowerCase(),
-              full_name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-              role: 'staff'
-            }])
-            .select()
-            .single();
-
-          if (createError) throw createError;
-
-          setUser(newStaff);
-          localStorage.setItem('notiflo_user', JSON.stringify(newStaff));
-          return { user: newStaff, error: null };
-        }
-        throw new Error('Invalid credentials');
+      if (profileError && profileError.code !== 'PGRST116') {
+        throw profileError;
       }
 
-      // Simple password check for demo (in production, use proper auth)
-      if (password !== 'demo2024') {
-        throw new Error('Invalid password');
-      }
+      const authUser: AuthUser = {
+        auth_user_id: authData.user.id,
+        email: authData.user.email || '',
+        profile: profile || null
+      };
 
-      // Update last login
-      await supabase
-        .from('staff')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', staffData.id);
-
-      setUser(staffData);
-      localStorage.setItem('notiflo_user', JSON.stringify(staffData));
-      return { user: staffData, error: null };
+      setUser(authUser);
+      return { user: authUser, error: null };
     } catch (err: any) {
-      return { user: null, error: err.message };
+      const errorMessage = err.message || 'Login failed';
+      setError(errorMessage);
+      return { user: null, error: errorMessage };
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem('notiflo_user');
+  const logout = useCallback(async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    }
   }, []);
 
   return {
     user,
     loading,
+    error,
     login,
     logout,
-    isAuthenticated: !!user
+    isAuthenticated: !!user && !!user.profile                                                                                     //-Must have profile to be authenticated
   };
 }

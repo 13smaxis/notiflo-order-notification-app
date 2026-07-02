@@ -14,7 +14,7 @@ const StageIcon: React.FC<{ stage: OrderStage; className?: string }> = ({ stage,
   switch (stage) {
     case 'queue':
       return <Clock className={iconClass} />;
-    case 'grill':
+    case 'preparing':
       return <Flame className={iconClass} />;
     case 'ready':
       return <CheckCircle className={iconClass} />;
@@ -207,8 +207,8 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearch }) 
                             <div className="text-gray-600 text-[11px] font-semibold mt-1">
                               Duration: {(() => {
                                 const start = new Date(order.created_at).getTime();
-                                const end = order.grill_started_at
-                                  ? new Date(order.grill_started_at).getTime()
+                                const end = order.preparing_started_at
+                                  ? new Date(order.preparing_started_at).getTime()
                                   : Date.now();
                                 const diff = Math.floor((end - start) / 1000);
                                 const mins = Math.floor(diff / 60);
@@ -219,23 +219,23 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearch }) 
                           </div>
                         </div>
 
-                        {/* Grill Stage */}
-                        {order.grill_started_at && (
+                        {/* Preparing Stage */}
+                        {order.preparing_started_at && (
                           <div className="flex items-start gap-2">
                             <Flame className="w-3 h-3 text-orange-500 mt-0.5" />
                             <div className="flex-1">
                               <div className="text-gray-600 font-medium">Preparing</div>
                               <div className="text-gray-500 text-[11px] mt-0.5">
-                                {formatDate(order.grill_started_at)}
+                                {formatDate(order.preparing_started_at)}
                               </div>
                               <div className="text-gray-600 text-[11px] font-semibold mt-1">
                                 Duration: {(() => {
-                                  let totalMs = order.previous_grill_ms || 0;
-                                  const grillStart = new Date(order.grill_started_at).getTime();
-                                  const grillEnd = order.ready_at
+                                  let totalMs = order.previous_preparing_ms || 0;
+                                  const preparingStart = new Date(order.preparing_started_at).getTime();
+                                  const preparingEnd = order.ready_at
                                     ? new Date(order.ready_at).getTime()
                                     : Date.now();
-                                  totalMs += grillEnd - grillStart;
+                                  totalMs += preparingEnd - preparingStart;
                                   const diff = Math.floor(totalMs / 1000);
                                   const mins = Math.floor(diff / 60);
                                   const secs = diff % 60;

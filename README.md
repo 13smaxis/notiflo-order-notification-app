@@ -75,4 +75,4 @@ VITE_USE_LOCAL_DB=true
 - Build: `npm run build`
 - Preview: `npm run preview`
 
-The board will show seeded orders across Queue, Grill, Ready, and Collected. Add, move, search, and delete are all persisted locally.
+The board will show seeded orders across Queue, Preparing, Ready, and Collected. Add, move, search, and delete are all persisted locally.

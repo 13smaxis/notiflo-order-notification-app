@@ -6,10 +6,10 @@ import { useOrders } from '@/hooks/useOrdersAdapter';                           
 import { useAuth } from '@/hooks/useAuth';                                                                      //-Custom hook to manage authentication
 import { OrderStage, STAGES } from '@/types/order';                                                             //-Order stages and metadata
 import Header from './Header';
-import KanbanBoard from './KanbanBoard';                                                                        //-Kanban board component to display orders in stages
-import AddOrderModal from './AddOrderModal';
+import { KanbanBoard } from './KanbanBoard';                                                                        //-Kanban board component to display orders in stages
+import { AddOrderModal } from './AddOrderModal';
 import SearchModal from './SearchModal';
-import LoginModal from './LoginModal';
+import { LoginModal } from './LoginModal';
 import { Plus, AlertCircle, RefreshCw, CheckCircle, X } from 'lucide-react';                                    //-Icons from lucide-react
 import { join } from 'path';                                                                                    //-Node.js path module for handling file paths
 
@@ -52,7 +52,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
  * It includes the header, kanban board, modals for adding and searching orders, login modal, toast notifications and footer.
  * The function returns JSX that defines the structure and behavior of the layout.
  */
-const AppLayout: React.FC = () => {
+export const AppLayout: React.FC = () => {
   //Contexts
   const { sidebarOpen, toggleSidebar } = useAppContext();                                                       //-Pulls sidebar state and toggle function from app context
   const isMobile = useIsMobile();                                                                               //-Custom hook to detect if the device is mobile
@@ -150,7 +150,7 @@ const AppLayout: React.FC = () => {
    */
   const stageCounts = {
     queue: orders.filter(o => o.stage === 'queue').length,
-    grill: orders.filter(o => o.stage === 'grill').length,
+    preparing: orders.filter(o => o.stage === 'preparing').length,
     ready: orders.filter(o => o.stage === 'ready').length,
     collected: orders.filter(o => o.stage === 'collected').length,
   };
@@ -163,7 +163,7 @@ const AppLayout: React.FC = () => {
                       bg-gradient-to-br from-slate-100 via-slate-50 to-amber-50
                       p-1
                     "
-    >                                                                                                           {/* Main container with background gradient and padding */}
+    >                                                                                                                             {/* Main container with background gradient and padding */}
       <div className="
                       flex flex-col
                       bg-slate-400
@@ -171,7 +171,7 @@ const AppLayout: React.FC = () => {
                       overflow-hidden
                       flex-1
                     "
-      >                                                                                                         {/* Inner container with rounded corners and shadow */}
+      >                                                                                                                           {/* Inner container with rounded corners and shadow */}
         <Header
           user={user}
           onOpenSearch={() => setSearchModalOpen(true)}
@@ -179,9 +179,9 @@ const AppLayout: React.FC = () => {
           onOpenLogin={() => setLoginModalOpen(true)}
           onLogout={logout}
           orderCount={activeOrderCount}
-        />                                                                                                      {/* Header Component */}
+        />                                                                                                                        {/* Header Component */}
 
-        <div className="max-w-7xl mx-auto px-3 md:px-4 py-3">                                                   {/* Quick Stats Bar */}
+        <div className="max-w-7xl mx-auto px-3 md:px-4 py-3">                                                                     {/* Quick Stats Bar */}
           <div className="
                           flex 
                           items-center 
@@ -207,7 +207,7 @@ const AppLayout: React.FC = () => {
                 <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" />
                 <span className="text-sm text-gray-600">
                   Preparing: <strong className="text-gray-800">
-                    {stageCounts.grill}
+                    {stageCounts.preparing}
                   </strong>
                 </span>
               </div>
@@ -309,7 +309,7 @@ const AppLayout: React.FC = () => {
                   />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-slate-700 mb-2">No orders yet</h2>                       {/* Heading for empty state */}
+              <h2 className="text-2xl font-bold text-slate-700 mb-2">No orders yet</h2>                                           {/* Heading for empty state */}
               <p className="text-slate-500 mb-6 max-w-md mx-auto">
                 Start by adding your first order.
                 Orders will appear on the board and can be moved through each stage as they progress.
@@ -387,7 +387,6 @@ const AppLayout: React.FC = () => {
       <AddOrderModal
         isOpen={addOrderModalOpen}
         onClose={() => setAddOrderModalOpen(false)}
-        onAddOrder={handleAddOrder}
       />
 
       <SearchModal
@@ -399,7 +398,6 @@ const AppLayout: React.FC = () => {
       <LoginModal
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
-        onLogin={login}
       />
 
       {/* Toast Notifications */}
@@ -414,4 +412,4 @@ const AppLayout: React.FC = () => {
   );
 };
 
-export default AppLayout;
+//export default AppLayout;

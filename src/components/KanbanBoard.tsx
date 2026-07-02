@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -13,9 +12,10 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Order, OrderStage, StageConfig, STAGES } from '@/types/order';
-import OrderCard from './OrderCard';
-import { Clock, Flame, CheckCircle, ShoppingBag } from 'lucide-react';                                          //-Icons for stages
+import React, { useCallback, useEffect, useState } from 'react';
+import { CheckCircle, Clock, Flame, ShoppingBag } from 'lucide-react';
+import { OrderCard } from './OrderCard';
+import { Order, OrderStage, STAGES } from '@/types/order';
 
 interface KanbanBoardProps {
   orders: Order[];
@@ -23,17 +23,12 @@ interface KanbanBoardProps {
   loading: boolean;
 }
 
-/*
- * StageIcon component renders the appropriate icon for each order stage.
- * It uses the lucide-react icons for visual representation.
- * The icon size can be customized via the className prop.
- */
-const StageIcon: React.FC<{ stage: OrderStage; className?: string }> = ({ stage, className }) => {
+const StageIconKB: React.FC<{ stage: OrderStage; className?: string }> = ({ stage, className }) => {
   const iconClass = className || 'w-5 h-5';
   switch (stage) {
     case 'queue':
       return <Clock className={iconClass} />;
-    case 'grill':
+    case 'preparing':
       return <Flame className={iconClass} />;
     case 'ready':
       return <CheckCircle className={iconClass} />;
@@ -45,7 +40,7 @@ const StageIcon: React.FC<{ stage: OrderStage; className?: string }> = ({ stage,
 };
 
 const StageColumn: React.FC<{
-  stage: StageConfig;
+  stage: typeof STAGES[0];
   isActive: boolean;
   children: React.ReactNode;
 }> = ({ stage, isActive, children }) => {
@@ -58,11 +53,11 @@ const StageColumn: React.FC<{
         isOver || isActive ? 'bg-slate-900/90 ring-2 ring-amber-400 shadow-lg' : ''
       }`}
     >
-      <div className="sticky top-0 z-20 mb-3 px-2 flex-shrink-0"> {/* Stage Heading */}
+      <div className="sticky top-0 z-20 mb-3 px-2 flex-shrink-0">
         <div className="bg-slate-900/95 backdrop-blur-sm rounded-full p-3">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg">
-              <StageIcon stage={stage.id} className="w-5 h-5 text-white" />
+              <StageIconKB stage={stage.id} className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="font-bold text-base md:text-lg text-white">{stage.title}</h3>
@@ -79,13 +74,12 @@ const StageColumn: React.FC<{
 };
 
 const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ order, isDragging }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging: isDragActive } = useDraggable({
-    id: order.id,
+  const { attributes, listeners, setNodeRef, transform, isDragging: isDragActive } = useDraggable({
+    id: order.id, // Using id alias (order_id)
   });
 
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
-    transition,
     touchAction: 'none',
   };
 
@@ -104,31 +98,18 @@ const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ o
   );
 };
 
-/*
- * KanbanBoard component renders the entire Kanban board with all stages and their respective orders.
- * It handles drag-and-drop functionality for moving orders between stages.
- * Manages the visibility of collected orders, ensuring they are only displayed for 5 minutes after collection.
- */
-const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading }) => {
+export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading }) => {
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [activeOrderStage, setActiveOrderStage] = useState<OrderStage | null>(null);
   const [overStageId, setOverStageId] = useState<OrderStage | null>(null);
   const [visibleCollectedOrders, setVisibleCollectedOrders] = useState<Set<string>>(new Set());
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 75,
-        tolerance: 5,
-      },
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 75, tolerance: 5 } })
   );
 
+  // Hide collected orders after 5 minutes
   useEffect(() => {
     const checkCollectedOrders = () => {
       const now = Date.now();
@@ -153,15 +134,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
 
   const getStageIdFromDragId = useCallback(
     (id: string | null): OrderStage | null => {
-      if (!id) {
-        return null;
-      }
-
-      if (STAGES.some((stage) => stage.id === id)) {
-        return id as OrderStage;
-      }
-
-      const order = orders.find((order) => order.id === id);
+      if (!id) return null;
+      if (STAGES.some((stage) => stage.id === id)) return id as OrderStage;
+      const order = orders.find((o) => o.id === id);
       return order?.stage ?? null;
     },
     [orders]
@@ -171,8 +146,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
     ({ active }: DragStartEvent) => {
       const orderId = active.id as string;
       setActiveOrderId(orderId);
-
-      const order = orders.find((orderItem) => orderItem.id === orderId);
+      const order = orders.find((o) => o.id === orderId);
       setActiveOrderStage(order?.stage ?? null);
     },
     [orders]
@@ -215,7 +189,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
     stageOrders.sort((a, b) => {
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
-      return dateB - dateA; // Newest first for all stages
+      return dateB - dateA;
     });
 
     acc[stage.id] = stageOrders;
@@ -229,23 +203,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <div
-              className="
-                            w-16 h-16 
-                            border-4 border-amber-200 
-                            rounded-full 
-                            animate-pulse
-                           "
-            />
-            <div
-              className="
-                            absolute 
-                            inset-0 w-16 h-16 
-                            border-4 border-amber-500 border-t-transparent 
-                            rounded-full 
-                            animate-spin
-                          "
-            />
+            <div className="w-16 h-16 border-4 border-amber-200 rounded-full animate-pulse" />
+            <div className="absolute inset-0 w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
           </div>
           <p className="text-gray-500 font-medium">Loading orders...</p>
         </div>
@@ -261,19 +220,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div
-        className="
-                  flex w-full 
-                  items-stretch
-                  gap-0 p-2 
-                  md:p-3 
-                  bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 
-                  h-full 
-                  overflow-y-auto 
-                  rounded-3xl
-                  hide-scrollbar
-                "
-      >
+      <div className="flex w-full items-stretch gap-0 p-2 md:p-3 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 h-full overflow-y-auto rounded-3xl hide-scrollbar">
         {STAGES.map((stage, idx) => (
           <React.Fragment key={stage.id}>
             <StageColumn stage={stage} isActive={overStageId === stage.id}>
@@ -290,16 +237,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
               )}
             </StageColumn>
             {idx < STAGES.length - 1 && (
-              <div
-                className="
-                              w-1 
-                              self-stretch 
-                              min-h-full 
-                              bg-gradient-to-b from-white/10 via-white/20 to-white/10 
-                              mx-1 
-                              flex-shrink-0
-                            "
-              />
+              <div className="w-1 self-stretch min-h-full bg-gradient-to-b from-white/10 via-white/20 to-white/10 mx-1 flex-shrink-0" />
             )}
           </React.Fragment>
         ))}
@@ -311,5 +249,3 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading 
     </DndContext>
   );
 };
-
-export default KanbanBoard;

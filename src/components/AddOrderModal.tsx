@@ -1,58 +1,58 @@
-import React, { useState } from 'react';
-import { X, Plus, Hash, DollarSign, Phone } from 'lucide-react';
+
+import { useAppContext } from '@/contexts/AppContext';
+import { useOrders } from '@/hooks/useOrders';
+import { Plus, Hash, DollarSign, X, Phone } from 'lucide-react';
+import React from 'react';
 
 interface AddOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddOrder: (order: {
-    order_number: string;
-    total_amount: number;
-    customer_phone: string;
-  }) => Promise<{ data: any; error: string | null }>;
 }
 
-const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, onAddOrder }) => {
-  const [orderNumber, setOrderNumber] = useState('');
-  const [totalAmount, setTotalAmount] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose }) => {
+  const { storeId } = useAppContext();
+  const { addOrder, loading } = useOrders(storeId);
+
+  const [orderNumber, setOrderNumber] = React.useState('');
+  const [totalAmount, setTotalAmount] = React.useState('');
+  const [customerPhone, setCustomerPhone] = React.useState(''); 
+  const [customerName, setCustomerName] = React.useState('');
+  const [localError, setLocalError] = React.useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setLocalError(null);
 
     if (!orderNumber.trim()) {
-      setError('Order number is required');
+      setLocalError('Order number is required');
       return;
     }
 
     if (!totalAmount || parseFloat(totalAmount) <= 0) {
-      setError('Please enter a valid amount');
+      setLocalError('Please enter a valid amount');
       return;
     }
 
-    if (!customerPhone.trim() || customerPhone.length < 10) {
-      setError('Please enter a valid phone number');
+    if (!customerPhone.trim() || !/^0[0-9]{9}$/.test(customerPhone.replace(/\s/g, ''))) {
+      setLocalError('Please enter a valid SA phone number (0XXXXXXXXX)');
       return;
     }
 
-    setLoading(true);
-    const { error: submitError } = await onAddOrder({
+    const { data, error } = await addOrder({
       order_number: orderNumber.trim(),
+      customer_phone: customerPhone.trim(),
       total_amount: parseFloat(totalAmount),
-      customer_phone: customerPhone.trim()
+      customer_name: customerName.trim() || undefined
     });
 
-    setLoading(false);
-
-    if (submitError) {
-      setError(submitError);
-    } else {
+    if (error) {
+      setLocalError(error);
+    } else if (data) {
       // Reset form and close
       setOrderNumber('');
       setTotalAmount('');
       setCustomerPhone('');
+      setCustomerName('');
       onClose();
     }
   };
@@ -62,10 +62,7 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, onAddOrd
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
@@ -87,17 +84,15 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, onAddOrd
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {error && (
+          {localError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
+              {localError}
             </div>
           )}
 
           {/* Order Number */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Order Number
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Order Number</label>
             <div className="relative">
               <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -113,13 +108,9 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, onAddOrd
 
           {/* Total Amount */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Total Amount (ZAR)
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Total Amount (ZAR)</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">
-                R
-              </span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">R</span>
               <input
                 type="number"
                 value={totalAmount}
@@ -132,11 +123,21 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, onAddOrd
             </div>
           </div>
 
+          {/* Customer Name (optional) */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Customer Name (Optional)</label>
+            <input
+              type="text"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder="e.g., John Doe"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-0 outline-none transition-colors"
+            />
+          </div>
+
           {/* Customer Phone */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Customer Cellphone
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Customer Cellphone</label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -175,5 +176,3 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, onAddOrd
     </div>
   );
 };
-
-export default AddOrderModal;
