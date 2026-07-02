@@ -13,7 +13,7 @@ const StageIcon: React.FC<{ stage: OrderStage; className?: string }> = ({ stage,
   switch (stage) {
     case 'queue':
       return <Clock className={iconClass} />;
-    case 'grill':
+    case 'preparing':
       return <Flame className={iconClass} />;
     case 'ready':
       return <CheckCircle className={iconClass} />;
@@ -24,7 +24,7 @@ const StageIcon: React.FC<{ stage: OrderStage; className?: string }> = ({ stage,
   }
 };
 
-const GrillTimer: React.FC<{ 
+const PreparingTimer: React.FC<{ 
   accumulatedMs: number; 
   previousMs: number; 
   isRunning: boolean;
@@ -119,12 +119,12 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, isDrag
           </span>
         </div>
 
-        {/* Grill timer (only show if in grill stage) */}
-        {order.stage === 'grill' && (
-          <GrillTimer
-            accumulatedMs={order.grill_accumulated_ms}
-            previousMs={order.previous_grill_ms}
-            isRunning={!order.grill_paused_at}
+        {/* preparing timer (only show if in preparing stage) */}
+        {order.stage === 'preparing' && (
+          <PreparingTimer
+            accumulatedMs={order.preparing_accumulated_ms}
+            previousMs={order.previous_preparing_ms}
+            isRunning={!order.preparing_paused_at}
           />
         )}
       </div>

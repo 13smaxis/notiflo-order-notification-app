@@ -1,9 +1,10 @@
 import React from 'react';
 import { Search, Plus, LogOut, User } from 'lucide-react';
-import { Staff } from '@/types/order';
+//import { Staff } from '@/types/order';
+import { AuthUser } from '@/hooks/useAuth';
 
 interface HeaderProps {
-  user: Staff | null;
+  user: AuthUser | null;  
   onOpenSearch: () => void;
   onOpenAddOrder: () => void;
   onOpenLogin: () => void;
@@ -103,8 +104,8 @@ const Header: React.FC<HeaderProps> = ({
                     <User className="w-5 h-5" />
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-sm">{user.full_name}</p>
-                    <p className="text-xs text-slate-400">{user.role}</p>
+                    <p className="font-medium text-sm">{user.email}</p>
+                    <p className="text-xs text-slate-400">{user.profile?.role || 'Staff'}</p> 
                   </div>
                 </div>
                 <button
@@ -186,7 +187,7 @@ const Header: React.FC<HeaderProps> = ({
             >
               <User className="w-5 h-5" />
                 <span className="text-sm font-medium truncate max-w-[4rem]">
-                  {user ? user.full_name.charAt(0).toUpperCase() : 'Sign In'}
+                  {user?.profile ? user.email.charAt(0).toUpperCase() : 'Sign In'} 
               </span>
             </button>
           </div>

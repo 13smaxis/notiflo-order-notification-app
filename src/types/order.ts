@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 
 export type OrderStage = 'queue' | 'preparing' | 'ready' | 'collected';
 
@@ -13,9 +14,9 @@ export interface OrderStatus {
 
 export interface Customer {
   customer_id: string;
-  customer_phone: string;
-  name?: string;
-  email?: string;
+  customer_phone: string;                                                                                                         //- Mandatory SA phone number format: 0XXXXXXXXX
+  name?: string;                                                                                                                  //- Optional field for customer name
+  email?: string;                                                                                                                 //- Optional field for customer email
   created_at: string;
 }
 
@@ -64,6 +65,8 @@ export interface Order extends DatabaseOrder {
 // ============= HELPER TYPES =============
 
 export interface Staff {
+  role: ReactNode;
+  full_name: any;
   auth_user_id: string;
   email: string;
   profile: Profile;
@@ -107,7 +110,7 @@ export const STAGES: StageConfig[] = [
     icon: 'clock'
   },
   {
-    id: 'preparing', // UI name (maps to 'preparing' in database)
+    id: 'preparing',                                                                                                          
     title: 'Preparing',
     color: 'text-orange-700',
     bgColor: 'bg-orange-100',

@@ -139,3 +139,22 @@
 .markdown-preview ol {
   @apply my-4 ml-6;
 }
+
+.order-modal-input {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+  caret-color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  color-scheme: light !important;
+}
+
+.order-modal-input:-webkit-autofill,
+.order-modal-input:-webkit-autofill:hover,
+.order-modal-input:-webkit-autofill:focus,
+.order-modal-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  caret-color: #111827 !important;
+  color-scheme: light !important;
+}

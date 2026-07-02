@@ -100,7 +100,17 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose })
                 value={orderNumber}
                 onChange={(e) => setOrderNumber(e.target.value)}
                 placeholder="e.g., 001"
-                className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-0 outline-none transition-colors text-lg font-mono"
+                className="
+                            w-full 
+                            pl-11 pr-4 py-3 
+                            border-2 border-gray-200 
+                            order-modal-input
+                            rounded-xl 
+                            focus:border-orange-500 focus:ring-0 
+                            outline-none 
+                            transition-colors 
+                            text-lg font-mono
+                          "
                 autoFocus
               />
             </div>
@@ -118,7 +128,7 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose })
                 placeholder="0.00"
                 step="0.01"
                 min="0"
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-0 outline-none transition-colors text-lg font-mono"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-0 outline-none transition-colors text-lg font-mono order-modal-input"
               />
             </div>
           </div>
@@ -131,7 +141,7 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose })
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder="e.g., John Doe"
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-0 outline-none transition-colors"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-0 outline-none transition-colors order-modal-input"
             />
           </div>
 
@@ -145,7 +155,7 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose })
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="e.g., 0821234567"
-                className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-0 outline-none transition-colors text-lg"
+                className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-0 outline-none transition-colors text-lg order-modal-input"
               />
             </div>
           </div>
