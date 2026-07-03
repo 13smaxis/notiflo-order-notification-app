@@ -212,7 +212,11 @@ export function useOrders(storeId: string | null) {
   }, [fetchStatuses]);
 
   useEffect(() => {
-    if (!storeId) return;
+    if (!storeId) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
 
     fetchOrders();
 

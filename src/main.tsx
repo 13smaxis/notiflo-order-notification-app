@@ -11,6 +11,25 @@ import './index.css'                                                            
 if ('serviceWorker' in navigator)                                                                               //-Check if the browser supports service workers
 {
   window.addEventListener('load', () => {                                                                       //-Wait for the window to load completely
+    const isDev = (import.meta as any).env?.DEV === true;                                                       //-Avoid stale cache and old builds during local development
+
+    if (isDev) {
+      navigator.serviceWorker.getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+        .catch((error) => {
+          console.log('SW cleanup failed:', error);
+        });
+
+      if ('caches' in window) {
+        caches.keys()
+          .then((cacheNames) => Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName))))
+          .catch((error) => {
+            console.log('Cache cleanup failed:', error);
+          });
+      }
+      return;
+    }
+
     navigator.serviceWorker.register('/sw.js')                                                                  //-Register the service worker located at /sw.js
       .then((registration) => {
         console.log('SW registered:', registration);                                                            //-Log successful registration

@@ -11,13 +11,14 @@ interface AddOrderModalProps {
 
 export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose }) => {
   const { storeId } = useAppContext();
-  const { addOrder, loading } = useOrders(storeId);
+  const { addOrder } = useOrders(storeId);
 
   const [orderNumber, setOrderNumber] = React.useState('');
   const [totalAmount, setTotalAmount] = React.useState('');
   const [customerPhone, setCustomerPhone] = React.useState(''); 
   const [customerName, setCustomerName] = React.useState('');
   const [localError, setLocalError] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,22 +39,31 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose })
       return;
     }
 
-    const { data, error } = await addOrder({
-      order_number: orderNumber.trim(),
-      customer_phone: customerPhone.trim(),
-      total_amount: parseFloat(totalAmount),
-      customer_name: customerName.trim() || undefined
-    });
+    setSubmitting(true);
 
-    if (error) {
-      setLocalError(error);
-    } else if (data) {
-      // Reset form and close
-      setOrderNumber('');
-      setTotalAmount('');
-      setCustomerPhone('');
-      setCustomerName('');
-      onClose();
+    try {
+      const { data, error } = await addOrder({
+        order_number: orderNumber.trim(),
+        customer_phone: customerPhone.trim(),
+        total_amount: parseFloat(totalAmount),
+        customer_name: customerName.trim() || undefined
+      });
+
+      if (error) {
+        setLocalError(error);
+        return;
+      }
+
+      if (data) {
+        // Reset form and close
+        setOrderNumber('');
+        setTotalAmount('');
+        setCustomerPhone('');
+        setCustomerName('');
+        onClose();
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -163,10 +173,10 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose })
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={submitting}
             className="w-full py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? (
+            {submitting ? (
               <>
                 <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

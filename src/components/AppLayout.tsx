@@ -54,7 +54,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
  */
 export const AppLayout: React.FC = () => {
   //Contexts
-  const { sidebarOpen, toggleSidebar } = useAppContext();                                                       //-Pulls sidebar state and toggle function from app context
+  const { sidebarOpen, toggleSidebar, setUser } = useAppContext();                                             //-Pulls sidebar state, toggle function, and auth sync setter from app context
   const isMobile = useIsMobile();                                                                               //-Custom hook to detect if the device is mobile
 
   //Local state to control modals, login, prompts, and toasts notifications
@@ -68,6 +68,14 @@ export const AppLayout: React.FC = () => {
   //Custom Hooks for Data & Auth
   const { orders, loading, error, addOrder, updateOrderStage, searchOrder, refetch } = useOrders();             //-Custom hook for fetching and updating orders(encaspulates order logic)
   const { user, login, logout, isAuthenticated, loading: authLoading } = useAuth();                             //-Custom hook for authentication
+
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    setUser(user);
+  }, [authLoading, user, setUser]);
 
   /**
    * Login Prompt  

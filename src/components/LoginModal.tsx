@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { X, LogIn, Mail, Lock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useAppContext } from '@/contexts/AppContext';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -10,35 +9,41 @@ interface LoginModalProps {
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
-  const { login, loading, error: authError } = useAuth();
-  const { setUser } = useAppContext();
+  const { login, authenticating, error: authError } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSubmitting(true);
 
     if (!email.trim()) {
       setError('Email is required');
+      setSubmitting(false);
       return;
     }
 
     if (!password) {
       setError('Password is required');
+      setSubmitting(false);
       return;
     }
 
     const { user, error: loginError } = await login(email, password);
+    setSubmitting(false);
 
     if (loginError) {
       setError(loginError);
-    } else if (user) {
-      setUser(user); // Store in global context
       setEmail('');
       setPassword('');
+    } else if (user) {
+      setEmail('');
+      setPassword('');
+      setError(null);
       onClose();
     }
   };
@@ -157,7 +162,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={submitting || authenticating}
             className="
                         w-full py-4 
                         bg-gradient-to-r from-amber-600 to-red-600 
@@ -174,7 +179,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                         disabled:opacity-50 disabled:cursor-not-allowed
                       "
           >                                                                                                                       {/* Submit Button */}
-            {loading ? (
+            {submitting || authenticating ? (
               <>                                                                                                                  {/* Loading spinner */}
                 <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" 

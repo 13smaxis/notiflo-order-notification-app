@@ -187,7 +187,7 @@ const Header: React.FC<HeaderProps> = ({
             >
               <User className="w-5 h-5" />
                 <span className="text-sm font-medium truncate max-w-[4rem]">
-                  {user?.profile ? user.email.charAt(0).toUpperCase() : 'Sign In'} 
+                  {user ? user.email.charAt(0).toUpperCase() : 'Sign In'} 
               </span>
             </button>
           </div>
