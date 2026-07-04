@@ -1,8 +1,8 @@
 import { useOrders as useOrdersRemote } from '@/hooks/useOrders';
-import { useOrdersLocal } from '@/hooks/useOrdersLocal';
 import { useAppContext } from '@/contexts/AppContext';
 
-function isLocalMode() 
+
+/*function isLocalMode() 
 {
   const flag = (import.meta as any).env?.VITE_USE_LOCAL_DB;
   if (typeof flag === 'string')                                                                                                   //- Check if the flag is a string (from .env file)
@@ -12,10 +12,10 @@ function isLocalMode()
   
   const mode = (import.meta as any).env?.MODE || (import.meta as any).env?.DEV ? 'development' : 'production';
   return mode !== 'production';
-}
+}*/
 
-export function useOrders() {
+export function useOrders() 
+{
   const { storeId } = useAppContext();
-
-  return isLocalMode() ? useOrdersLocal() : useOrdersRemote(storeId);
+  return useOrdersRemote(storeId); //- 
 }
