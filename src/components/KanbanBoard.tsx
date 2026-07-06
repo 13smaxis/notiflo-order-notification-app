@@ -57,7 +57,8 @@ const StageColumn: React.FC<{
   stage: typeof STAGES[0];
   isActive: boolean;
   children: React.ReactNode;
-}> = ({ stage, isActive, children }) => {
+  compact?: boolean;
+}> = ({ stage, isActive, children, compact = false }) => {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
 
   return (
@@ -65,7 +66,7 @@ const StageColumn: React.FC<{
       ref={setNodeRef}                                                                                                            //- This line sets the reference for the droppable area, allowing the DnD library to track it.
       className={`
                   flex-1 flex flex-col 
-                  min-h-0 
+                  min-h-0 h-full 
                   rounded-3xl 
                   border border-white/10
                   bg-slate-950/20
@@ -74,14 +75,14 @@ const StageColumn: React.FC<{
                   ${ isOver || isActive ? 'bg-slate-900/90 ring-2 ring-amber-400 shadow-lg' : '' }                                //- This line applies conditional styling based on whether the column is being hovered over or is active, changing its background and adding a ring and shadow for visual feedback.
                 `}
     >
-      <div className="z-20 mb-3 px-2 flex-shrink-0 pt-2">
-        <div className="bg-slate-900/95 backdrop-blur-sm rounded-full p-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg">
-              <StageIconKB stage={stage.id} className="w-5 h-5 text-white" />
+      <div className={compact ? 'z-20 mb-1 px-1 flex-shrink-0 pt-1' : 'z-20 mb-2 px-1.5 flex-shrink-0 pt-1.5 md:mb-3 md:px-2 md:pt-2'}>
+        <div className={compact ? 'bg-slate-900/95 backdrop-blur-sm rounded-full p-1.5' : 'bg-slate-900/95 backdrop-blur-sm rounded-full p-2 md:p-3'}>
+          <div className={compact ? 'flex items-center gap-1' : 'flex items-center gap-1.5 md:gap-2'}>
+            <div className={compact ? 'p-0.5 rounded-lg' : 'p-1 rounded-lg md:p-1.5'}>
+              <StageIconKB stage={stage.id} className={compact ? 'w-3 h-3 text-white' : 'w-4 h-4 md:w-5 md:h-5 text-white'} />
             </div>
             <div>
-              <h3 className="font-bold text-base md:text-lg text-white">{stage.title}</h3>
+              <h3 className={compact ? 'font-bold text-[10px] text-white' : 'font-bold text-[11px] sm:text-xs md:text-lg text-white'}>{stage.title}</h3>
             </div>
           </div>
         </div>
@@ -89,7 +90,7 @@ const StageColumn: React.FC<{
 
       <div className={`
                         flex-1 flex flex-col 
-                        gap-2 px-2 pb-2 
+                        gap-1 px-1 pb-1 md:gap-1.5 md:px-1.5 md:pb-1.5 
                         min-h-0 overflow-y-auto 
                         hide-scrollbar 
                         ${isOver || isActive ? 'rounded-3xl p-2' : ''}
@@ -127,7 +128,7 @@ const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ o
         isDragging || isDragActive ? 'opacity-0' : ''
       }`}
     >
-      <OrderCard order={order} onMoveOrder={() => {}} isDragging={isDragging || isDragActive} />
+      <OrderCard order={order} onMoveOrder={() => {}} isDragging={isDragging || isDragActive} compact />
     </div>
   );
 };
@@ -246,12 +247,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
     </StageColumn>
   );
 
-  const renderStageRow = (stageIds: OrderStage[]) => (
-    <div className="flex flex-1 min-h-0 min-w-0 gap-1">
-      {stageIds.map((stageId) => renderStageColumn(STAGES.find((stage) => stage.id === stageId)!))}
-    </div>
-  );
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -282,18 +277,21 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex w-full items-stretch gap-2 p-2 md:p-3 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 h-full overflow-hidden rounded-3xl hide-scrollbar">
-        <div className="flex w-full flex-1 min-h-0 flex-col gap-2 md:hidden min-w-0 h-full">
-          {renderStageRow(['queue', 'preparing'])}
-          {renderStageRow(['ready', 'collected'])}
-        </div>
-
+      <div className="
+                        flex w-full 
+                        items-stretch 
+                        gap-1 p-1.5 md:gap-2 md:p-3 
+                        bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 
+                        h-full overflow-hidden 
+                        rounded-3xl 
+                        hide-scrollbar
+                      "
+      >
         {STAGES.map((stage, idx) => (
           <React.Fragment key={stage.id}>
-            <div className="hidden md:flex md:flex-1 md:min-w-0">
+            <div className="flex flex-1 min-w-0">
               {renderStageColumn(stage)}
             </div>
-            {idx < STAGES.length - 1 && <div className="hidden md:block" />}
           </React.Fragment>
         ))}
       </div>
