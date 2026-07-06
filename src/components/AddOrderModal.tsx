@@ -11,7 +11,7 @@ interface AddOrderModalProps {
 
 export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose }) => {
   const { storeId } = useAppContext();
-  const { addOrder } = useOrders(storeId);
+  const { addOrder } = useOrders(storeId, { subscribeRealtime: false });
 
   const [orderNumber, setOrderNumber] = React.useState('');
   const [totalAmount, setTotalAmount] = React.useState('');

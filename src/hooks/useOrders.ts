@@ -139,7 +139,12 @@ async function transformOrder(dbOrder: DatabaseOrder): Promise<Order> {
 
 // ============= HOOK =============
 
-export function useOrders(storeId: string | null) {
+interface UseOrdersOptions {
+  subscribeRealtime?: boolean;
+}
+
+export function useOrders(storeId: string | null, options: UseOrdersOptions = {}) {
+  const { subscribeRealtime = true } = options;
   const [orders, setOrders] = useState<Order[]>([]);
   const [statuses, setStatuses] = useState<OrderStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -220,6 +225,10 @@ export function useOrders(storeId: string | null) {
 
     fetchOrders();
 
+    if (!subscribeRealtime) {
+      return;
+    }
+
     // Subscribe to order changes
     const channel = supabase
       .channel(`orders-store-${storeId}`)
@@ -266,7 +275,7 @@ export function useOrders(storeId: string | null) {
       supabase.removeChannel(channel);
       clearInterval(timerInterval);
     };
-  }, [storeId, fetchOrders]);
+  }, [storeId, fetchOrders, subscribeRealtime]);
 
   // Get or create customer
   const getOrCreateCustomer = useCallback(
