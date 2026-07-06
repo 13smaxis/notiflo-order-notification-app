@@ -33,7 +33,8 @@ interface KanbanBoardProps
 
 const StageIconKB: React.FC<{ stage: OrderStage; className?: string }> = ({ stage, className }) => {
   const iconClass = className || 'w-5 h-5';
-  switch (stage) {
+  switch (stage) 
+  {
     case 'queue':
       return <Clock className={iconClass} />;
     case 'preparing':
@@ -62,11 +63,18 @@ const StageColumn: React.FC<{
   return (
     <div
       ref={setNodeRef}                                                                                                            //- This line sets the reference for the droppable area, allowing the DnD library to track it.
-      className={`flex-1 flex flex-col min-h-0 rounded-3xl transition-all ${
-        isOver || isActive ? 'bg-slate-900/90 ring-2 ring-amber-400 shadow-lg' : ''
-      }`}
+      className={`
+                  flex-1 flex flex-col 
+                  min-h-0 
+                  rounded-3xl 
+                  border border-white/10
+                  bg-slate-950/20
+                  overflow-hidden
+                  transition-all 
+                  ${ isOver || isActive ? 'bg-slate-900/90 ring-2 ring-amber-400 shadow-lg' : '' }                                //- This line applies conditional styling based on whether the column is being hovered over or is active, changing its background and adding a ring and shadow for visual feedback.
+                `}
     >
-      <div className="sticky top-0 z-20 mb-3 px-2 flex-shrink-0">
+      <div className="z-20 mb-3 px-2 flex-shrink-0 pt-2">
         <div className="bg-slate-900/95 backdrop-blur-sm rounded-full p-3">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg">
@@ -79,7 +87,7 @@ const StageColumn: React.FC<{
         </div>
       </div>
 
-      <div className={`flex-1 flex flex-col gap-2 px-2 min-h-0 ${isOver || isActive ? 'rounded-3xl p-2' : ''}`}>
+      <div className={`flex-1 flex flex-col gap-2 px-2 pb-2 min-h-0 overflow-y-auto hide-scrollbar ${isOver || isActive ? 'rounded-3xl p-2' : ''}`}>
         {children}
       </div>
     </div>
@@ -94,7 +102,7 @@ const StageColumn: React.FC<{
  */
 const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ order, isDragging }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging: isDragActive } = useDraggable({
-    id: order.id, // Using id alias (order_id)
+    id: order.id,                                                                                                                 //-Using id alias (order_id)
   });
 
   const style: React.CSSProperties = {
@@ -239,7 +247,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex w-full items-stretch gap-0 p-2 md:p-3 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 h-full overflow-y-auto rounded-3xl hide-scrollbar">
+      <div className="flex w-full items-stretch gap-0 p-2 md:p-3 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 h-full overflow-hidden rounded-3xl hide-scrollbar">
         {STAGES.map((stage, idx) => (
           <React.Fragment key={stage.id}>
             <StageColumn stage={stage} isActive={overStageId === stage.id}>
@@ -255,9 +263,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
                 ))
               )}
             </StageColumn>
-            {idx < STAGES.length - 1 && (
-              <div className="w-1 self-stretch min-h-full bg-gradient-to-b from-white/10 via-white/20 to-white/10 mx-1 flex-shrink-0" />
-            )}
           </React.Fragment>
         ))}
       </div>
