@@ -285,13 +285,13 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
           .from('customer')
           .select('customer_id')
           .eq('customer_phone', phoneNumber)
-          .single();
+          .maybeSingle();
 
         if (existingCustomer) {
           return { customerId: existingCustomer.customer_id, error: null };
         }
 
-        if (queryError && queryError.code !== 'PGRST116') {
+        if (queryError) {
           throw queryError;
         }
 
@@ -303,9 +303,24 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
             email: email || null
           }])
           .select('customer_id')
-          .single();
+          .maybeSingle();
 
-        if (createError) throw createError;
+        if (createError) {
+          if (createError.code === '23505' || createError.code === '409') {
+            const { data: retryCustomer, error: retryError } = await supabase
+              .from('customer')
+              .select('customer_id')
+              .eq('customer_phone', phoneNumber)
+              .maybeSingle();
+
+            if (retryError) throw retryError;
+            if (retryCustomer) {
+              return { customerId: retryCustomer.customer_id, error: null };
+            }
+          }
+
+          throw createError;
+        }
 
         return { customerId: newCustomer.customer_id, error: null };
       } catch (err: any) {
@@ -346,6 +361,21 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
           throw new Error('Queue status not found');
         }
 
+        const { data: existingOrder, error: existingOrderError } = await supabase
+          .from('orders')
+          .select('order_id')
+          .eq('store_id', storeId)
+          .eq('order_number', orderData.order_number)
+          .maybeSingle();
+
+        if (existingOrderError) {
+          throw existingOrderError;
+        }
+
+        if (existingOrder) {
+          throw new Error(`Order #${orderData.order_number} already exists`);
+        }
+
         // Create order
         const { data: dbOrder, error } = await supabase
           .from('orders')
@@ -363,7 +393,13 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
           `)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505' || error.code === '409') {
+            throw new Error(`Order #${orderData.order_number} already exists`);
+          }
+
+          throw error;
+        }
 
         // Transform and add to state
         const transformedOrder = await transformOrder(dbOrder as DatabaseOrder);
