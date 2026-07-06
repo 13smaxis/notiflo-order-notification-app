@@ -87,7 +87,14 @@ const StageColumn: React.FC<{
         </div>
       </div>
 
-      <div className={`flex-1 flex flex-col gap-2 px-2 pb-2 min-h-0 overflow-y-auto hide-scrollbar ${isOver || isActive ? 'rounded-3xl p-2' : ''}`}>
+      <div className={`
+                        flex-1 flex flex-col 
+                        gap-2 px-2 pb-2 
+                        min-h-0 overflow-y-auto 
+                        hide-scrollbar 
+                        ${isOver || isActive ? 'rounded-3xl p-2' : ''}
+                    `}
+      >
         {children}
       </div>
     </div>
@@ -144,7 +151,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
 
       const visible = new Set<string>();
       orders.forEach((order) => {
-        if (order.stage === 'collected' && order.collected_at) {
+        if (order.stage === 'collected' && order.collected_at) 
+        {
           const collectedTime = new Date(order.collected_at).getTime();
           if (now - collectedTime < fiveMinutes) {
             visible.add(order.id);
@@ -189,7 +197,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
   const handleDragEnd = useCallback(
     ({ over }: DragEndEvent) => {
       const destinationStage = getStageIdFromDragId(over?.id as string | null);
-      if (activeOrderId && destinationStage && activeOrderStage && destinationStage !== activeOrderStage) {
+      if (activeOrderId && destinationStage && activeOrderStage && destinationStage !== activeOrderStage) 
+      {
         onMoveOrder(activeOrderId, destinationStage);
       }
 
@@ -231,7 +240,15 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             <div className="w-16 h-16 border-4 border-amber-200 rounded-full animate-pulse" />
-            <div className="absolute inset-0 w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            <div className="
+                              absolute 
+                              inset-0 
+                              w-16 h-16 
+                              border-4 border-amber-500 border-t-transparent 
+                              rounded-full 
+                              animate-spin
+                            " 
+            />
           </div>
           <p className="text-gray-500 font-medium">Loading orders...</p>
         </div>
@@ -247,7 +264,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex w-full items-stretch gap-0 p-2 md:p-3 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 h-full overflow-hidden rounded-3xl hide-scrollbar">
+      <div className="
+                      flex w-full 
+                      items-stretch 
+                      gap-2 p-2 md:p-3 
+                      bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900
+                      h-full overflow-hidden 
+                      rounded-3xl 
+                      hide-scrollbar
+                    "
+      >
         {STAGES.map((stage, idx) => (
           <React.Fragment key={stage.id}>
             <StageColumn stage={stage} isActive={overStageId === stage.id}>
