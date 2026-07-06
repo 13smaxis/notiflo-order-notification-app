@@ -7,9 +7,10 @@ import React from 'react';
 interface AddOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOrderCreated?: () => void | Promise<void>;
 }
 
-export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose }) => {
+export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, onOrderCreated }) => {
   const { storeId } = useAppContext();
   const { addOrder } = useOrders(storeId, { subscribeRealtime: false });
 
@@ -55,6 +56,8 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose })
       }
 
       if (data) {
+        await onOrderCreated?.();
+
         // Reset form and close
         setOrderNumber('');
         setTotalAmount('');

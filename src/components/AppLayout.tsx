@@ -501,6 +501,7 @@ export const AppLayout: React.FC = () => {
       <AddOrderModal
         isOpen={addOrderModalOpen}
         onClose={() => setAddOrderModalOpen(false)}
+              onOrderCreated={refetch}
       />
 
       <SearchModal
