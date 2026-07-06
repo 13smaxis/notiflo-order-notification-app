@@ -234,6 +234,24 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
 
   const activeOrder = orders.find((order) => order.id === activeOrderId) ?? null;
 
+  const renderStageColumn = (stage: typeof STAGES[0]) => (
+    <StageColumn stage={stage} isActive={overStageId === stage.id}>
+      {ordersByStage[stage.id].length === 0 ? (
+        <div className="flex items-center justify-center py-8 text-white/40" />
+      ) : (
+        ordersByStage[stage.id].map((order) => (
+          <DraggableOrderCard key={order.id} order={order} isDragging={activeOrderId === order.id} />
+        ))
+      )}
+    </StageColumn>
+  );
+
+  const renderStageRow = (stageIds: OrderStage[]) => (
+    <div className="flex flex-1 min-h-0 min-w-0 gap-1">
+      {stageIds.map((stageId) => renderStageColumn(STAGES.find((stage) => stage.id === stageId)!))}
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -264,31 +282,18 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="
-                      flex w-full 
-                      items-stretch 
-                      gap-2 p-2 md:p-3 
-                      bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900
-                      h-full overflow-hidden 
-                      rounded-3xl 
-                      hide-scrollbar
-                    "
-      >
+      <div className="flex w-full items-stretch gap-2 p-2 md:p-3 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 h-full overflow-hidden rounded-3xl hide-scrollbar">
+        <div className="flex w-full flex-1 min-h-0 flex-col gap-2 md:hidden min-w-0 h-full">
+          {renderStageRow(['queue', 'preparing'])}
+          {renderStageRow(['ready', 'collected'])}
+        </div>
+
         {STAGES.map((stage, idx) => (
           <React.Fragment key={stage.id}>
-            <StageColumn stage={stage} isActive={overStageId === stage.id}>
-              {ordersByStage[stage.id].length === 0 ? (
-                <div className="flex items-center justify-center py-8 text-white/40"></div>
-              ) : (
-                ordersByStage[stage.id].map((order) => (
-                  <DraggableOrderCard
-                    key={order.id}
-                    order={order}
-                    isDragging={activeOrderId === order.id}
-                  />
-                ))
-              )}
-            </StageColumn>
+            <div className="hidden md:flex md:flex-1 md:min-w-0">
+              {renderStageColumn(stage)}
+            </div>
+            {idx < STAGES.length - 1 && <div className="hidden md:block" />}
           </React.Fragment>
         ))}
       </div>
