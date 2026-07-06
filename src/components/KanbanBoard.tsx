@@ -75,14 +75,47 @@ const StageColumn: React.FC<{
                   ${ isOver || isActive ? 'bg-slate-900/90 ring-2 ring-amber-400 shadow-lg' : '' }                                //- This line applies conditional styling based on whether the column is being hovered over or is active, changing its background and adding a ring and shadow for visual feedback.
                 `}
     >
-      <div className={compact ? 'z-20 mb-1 px-1 flex-shrink-0 pt-1' : 'z-20 mb-2 px-1.5 flex-shrink-0 pt-1.5 md:mb-3 md:px-2 md:pt-2'}>
-        <div className={compact ? 'bg-slate-900/95 backdrop-blur-sm rounded-full p-1.5' : 'bg-slate-900/95 backdrop-blur-sm rounded-full p-2 md:p-3'}>
-          <div className={compact ? 'flex items-center gap-1' : 'flex items-center gap-1.5 md:gap-2'}>
-            <div className={compact ? 'p-0.5 rounded-lg' : 'p-1 rounded-lg md:p-1.5'}>
-              <StageIconKB stage={stage.id} className={compact ? 'w-3 h-3 text-white' : 'w-4 h-4 md:w-5 md:h-5 text-white'} />
+      <div className={
+                        compact ? 
+                  'z-20 mb-3 px-1 flex-shrink-0 pt-1' : 
+                        'z-20 mb-2 px-1.5 flex-shrink-0 pt-1.5 md:mb-3 md:px-2 md:pt-2'
+                     }
+      >
+        <div className={
+                          compact ? 
+                          'bg-slate-900/95 backdrop-blur-sm rounded-full p-1.5' : 
+                          'bg-slate-900/95 backdrop-blur-sm rounded-full p-2 md:p-3'
+                       }
+        >
+          <div className={
+                            compact ? 
+                            'flex items-center gap-1' : 
+                            'flex items-center gap-1.5 md:gap-2'
+                         }
+          >
+            <div className={
+                              compact ? 
+                              'p-0.5 rounded-lg' : 
+                              'p-1 rounded-lg md:p-1.5'
+                           }
+            >
+              <StageIconKB stage={stage.id} 
+                           className={
+                                        compact ? 
+                                        'w-3 h-3 text-white' : 
+                                        'w-4 h-4 md:w-5 md:h-5 text-white'
+                                     } 
+              />
             </div>
             <div>
-              <h3 className={compact ? 'font-bold text-[10px] text-white' : 'font-bold text-[11px] sm:text-xs md:text-lg text-white'}>{stage.title}</h3>
+              <h3 className={
+                              compact ? 
+                              'font-bold text-[10px] text-white' : 
+                              'font-bold text-[11px] sm:text-xs md:text-lg text-white'
+                            }
+              >
+                {stage.title}
+              </h3>
             </div>
           </div>
         </div>
