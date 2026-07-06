@@ -375,18 +375,19 @@ export function useOrders(storeId: string | null) {
         // Map UI stage to database status code
         const statusCode = mapStageToStatusCode(newStage);
         const newStatus = getStatusByCode(statusCode);
-
         if (!newStatus) {
           throw new Error(`Status '${statusCode}' not found`);
         }
 
+        const updatePayload: Record<string, string> = {
+          status_id: newStatus.status_id,
+          updated_at: new Date().toISOString()
+        };
+
         // Update the order
         const { error } = await supabase
           .from('orders')
-          .update({
-            status_id: newStatus.status_id,
-            updated_at: new Date().toISOString()
-          })
+          .update(updatePayload)
           .eq('order_id', orderId);
 
         if (error) throw error;

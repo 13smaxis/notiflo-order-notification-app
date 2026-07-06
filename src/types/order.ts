@@ -37,6 +37,8 @@ export interface DatabaseOrder {
   total_amount: number;
   created_at: string;
   updated_at: string;
+  ready_at?: string | null;
+  collected_at?: string | null;
   // Joins
   customer?: Customer;
   status?: OrderStatus;

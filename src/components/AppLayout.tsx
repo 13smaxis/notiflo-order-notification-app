@@ -11,7 +11,6 @@ import { AddOrderModal } from './AddOrderModal';
 import SearchModal from './SearchModal';
 import { LoginModal } from './LoginModal';
 import { Plus, AlertCircle, RefreshCw, CheckCircle, X } from 'lucide-react';                                    //-Icons from lucide-react
-import { join } from 'path';                                                                                    //-Node.js path module for handling file paths
 
 /**
  * Defines the component's props/properties.
@@ -64,10 +63,54 @@ export const AppLayout: React.FC = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);                                                //-Controls visibility of login prompt banner
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);     //-Controls data passed to toast notifications
+  const [pendingOrderStages, setPendingOrderStages] = useState<Partial<Record<string, OrderStage>>>({});        //-Keeps moved cards visible in their dropped stage until remote data catches up
+  const [pendingCollectedAt, setPendingCollectedAt] = useState<Partial<Record<string, string>>>({});            //-Keeps collected cards visible during the 5 minute window
 
   //Custom Hooks for Data & Auth
   const { orders, loading, error, addOrder, updateOrderStage, searchOrder, refetch } = useOrders();             //-Custom hook for fetching and updating orders(encaspulates order logic)
   const { user, login, logout, isAuthenticated, loading: authLoading } = useAuth();                             //-Custom hook for authentication
+
+  const displayOrders = orders.map((order) => {
+    const pendingStage = pendingOrderStages[order.id];
+    if (!pendingStage) {
+      return order;
+    }
+
+    const pendingOrder = { ...order, stage: pendingStage };
+    if (pendingStage === 'collected' && !pendingOrder.collected_at) {
+      pendingOrder.collected_at = pendingCollectedAt[order.id] ?? new Date().toISOString();
+    }
+
+    return pendingOrder;
+  });
+
+  useEffect(() => {
+    setPendingOrderStages((currentPending) => {
+      let hasChanges = false;
+      const nextPending: Partial<Record<string, OrderStage>> = { ...currentPending };
+
+      for (const order of orders) {
+        const pendingStage = currentPending[order.id];
+        if (pendingStage && order.stage === pendingStage) {
+          if (pendingStage === 'collected' && !order.collected_at) {
+            continue;
+          }
+
+          delete nextPending[order.id];
+          hasChanges = true;
+        }
+      }
+
+      for (const pendingOrderId of Object.keys(currentPending)) {
+        if (!orders.some((order) => order.id === pendingOrderId)) {
+          delete nextPending[pendingOrderId];
+          hasChanges = true;
+        }
+      }
+
+      return hasChanges ? nextPending : currentPending;
+    });
+  }, [orders]);
 
   useEffect(() => {
     if (authLoading) {
@@ -102,9 +145,72 @@ export const AppLayout: React.FC = () => {
       return;                                                                                                   //-Exits function if not authenticated
     }
 
-    const order = orders.find(o => o.id === orderId);                                                           //-Finds the order being moved
+    const order = displayOrders.find(o => o.id === orderId) ?? orders.find(o => o.id === orderId);              //-Finds the order being moved
+    if (order) {
+      setPendingOrderStages((currentPending) => ({
+        ...currentPending,
+        [orderId]: newStage,
+      }));
+
+      if (newStage === 'collected') {
+        setPendingCollectedAt((currentPending) => ({
+          ...currentPending,
+          [orderId]: new Date().toISOString(),
+        }));
+      }
+    }
+
     const result = await updateOrderStage(orderId, newStage);                                                   //-Pause while updates the order's stage using the custom hook
-    if (!result.error && order)                                                                                 //-If update successful and order found
+    if (result.error) {
+      setPendingOrderStages((currentPending) => {
+        if (!currentPending[orderId]) {
+          return currentPending;
+        }
+
+        const nextPending = { ...currentPending };
+        delete nextPending[orderId];
+        return nextPending;
+      });
+      setPendingCollectedAt((currentPending) => {
+        if (!currentPending[orderId]) {
+          return currentPending;
+        }
+
+        const nextPending = { ...currentPending };
+        delete nextPending[orderId];
+        return nextPending;
+      });
+      return;
+    }
+
+    if (newStage !== 'collected') {
+      setPendingCollectedAt((currentPending) => {
+        if (!currentPending[orderId]) {
+          return currentPending;
+        }
+
+        const nextPending = { ...currentPending };
+        delete nextPending[orderId];
+        return nextPending;
+      });
+    }
+
+    if (newStage === 'collected') {
+      const backendOrder = orders.find((currentOrder) => currentOrder.id === orderId);
+      if (backendOrder?.collected_at) {
+        setPendingCollectedAt((currentPending) => {
+          if (!currentPending[orderId]) {
+            return currentPending;
+          }
+
+          const nextPending = { ...currentPending };
+          delete nextPending[orderId];
+          return nextPending;
+        });
+      }
+    }
+
+    if (order)                                                                                                  //-If update successful and order found
     {
       const stageName = STAGES.find(s => s.id === newStage)?.title || newStage;                                 //-Gets the human-readable stage name
       setToast({                                                                                                //-Displays success toast notification
@@ -150,17 +256,17 @@ export const AppLayout: React.FC = () => {
   };
 
 
-  const activeOrderCount = orders.filter((order) => order.stage !== 'collected').length;                        //-Counts active orders (not collected)
+  const activeOrderCount = displayOrders.filter((order) => order.stage !== 'collected').length;                 //-Counts active orders (not collected)
 
   /**
    * Counts number of orders in each stage for quick stats bar
    * Used to display the number of orders in each stage at the top of the layout
    */
   const stageCounts = {
-    queue: orders.filter(o => o.stage === 'queue').length,
-    preparing: orders.filter(o => o.stage === 'preparing').length,
-    ready: orders.filter(o => o.stage === 'ready').length,
-    collected: orders.filter(o => o.stage === 'collected').length,
+    queue: displayOrders.filter(o => o.stage === 'queue').length,
+    preparing: displayOrders.filter(o => o.stage === 'preparing').length,
+    ready: displayOrders.filter(o => o.stage === 'ready').length,
+    collected: displayOrders.filter(o => o.stage === 'collected').length,
   };
 
   return (
@@ -278,7 +384,7 @@ export const AppLayout: React.FC = () => {
           <div className="mx-0 md:mx-4 my-2 md:my-2 h-[96%] px-3">                                              {/* Login Prompt Banner removed — header handles sign-in */}
             <div className="max-w-7xl mx-auto h-full">                                                          {/* Kanban Board Container */}
               <KanbanBoard
-                orders={orders}
+                orders={displayOrders}
                 onMoveOrder={handleMoveOrder}
                 loading={loading}
               />                                                                                                {/* Calls the Kanban Board Component */}
@@ -288,7 +394,7 @@ export const AppLayout: React.FC = () => {
           {/* If we are not loading AND there are zero orders, then show this UI 
           * true && true && JSX, if any condition is false, react renders nothing 
           */}
-          {!loading && orders.length === 0 && (
+          {!loading && displayOrders.length === 0 && (
             <div className="text-center py-16 px-4">                                                            {/* Centered container for empty state */}
               <div className="
                               w-28 h-28 

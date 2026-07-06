@@ -1,3 +1,4 @@
+
 import {
   DndContext,
   DragOverlay,
@@ -17,7 +18,14 @@ import { CheckCircle, Clock, Flame, ShoppingBag } from 'lucide-react';
 import { OrderCard } from './OrderCard';
 import { Order, OrderStage, STAGES } from '@/types/order';
 
-interface KanbanBoardProps {
+/*
+ * These are the properties that the KanbanBoard component expects to receive from its parent component.
+ * - orders: An array of Order objects representing the current orders in the system.
+ * - onMoveOrder: A callback function that is called when an order is moved from one stage to another.
+ * - loading: A boolean indicating whether the orders are currently being loaded.
+ */
+interface KanbanBoardProps 
+{
   orders: Order[];
   onMoveOrder: (orderId: string, newStage: OrderStage) => void;
   loading: boolean;
@@ -39,6 +47,11 @@ const StageIconKB: React.FC<{ stage: OrderStage; className?: string }> = ({ stag
   }
 };
 
+/*
+ * StageColumn is a React functional component that represents a single column in the Kanban board.
+ * It takes in a stage object, a boolean indicating if the column is active.
+ * The component uses the useDroppable hook from @dnd-kit/core to make the column droppable for drag-and-drop functionality.
+ */
 const StageColumn: React.FC<{
   stage: typeof STAGES[0];
   isActive: boolean;
@@ -48,7 +61,7 @@ const StageColumn: React.FC<{
 
   return (
     <div
-      ref={setNodeRef}
+      ref={setNodeRef}                                                                                                            //- This line sets the reference for the droppable area, allowing the DnD library to track it.
       className={`flex-1 flex flex-col min-h-0 rounded-3xl transition-all ${
         isOver || isActive ? 'bg-slate-900/90 ring-2 ring-amber-400 shadow-lg' : ''
       }`}
@@ -73,6 +86,12 @@ const StageColumn: React.FC<{
   );
 };
 
+
+/*
+ * DraggableOrderCard is a React functional component that represents a single order card that can be dragged and dropped.
+ * It takes in an order object and a boolean indicating if the card is currently being dragged.
+ * The component uses the useDraggable hook from @dnd-kit/core to make the card draggable.
+ */
 const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ order, isDragging }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging: isDragActive } = useDraggable({
     id: order.id, // Using id alias (order_id)
@@ -248,4 +267,4 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
       </DragOverlay>
     </DndContext>
   );
-};
+}; 
