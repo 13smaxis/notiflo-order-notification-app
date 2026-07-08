@@ -79,25 +79,25 @@ const StageColumn: React.FC<{
       <div className={
                         compact ? 
                   'z-20 mb-3 px-1 flex-shrink-0 pt-1' : 
-                        'z-20 mb-2 px-1.5 flex-shrink-0 pt-1.5 md:mb-3 md:px-2 md:pt-2'
+                        'z-20 mb-2 px-1.5 flex-shrink-0 pt-1.5 md:mb-3 md:px-2 md:pt-2 flex justify-center'
                      }
       >
         <div className={
                           compact ? 
                           'bg-slate-900/95 backdrop-blur-sm rounded-full p-1.5' : 
-                          'bg-slate-900/95 backdrop-blur-sm rounded-full p-2 md:p-3'
+                          'bg-slate-900/95 backdrop-blur-sm rounded-full p-2 md:p-3 w-fit max-w-full'
                        }
         >
           <div className={
                             compact ? 
                             'flex items-center gap-1' : 
-                            'flex items-center gap-1.5 md:gap-2'
+                            'flex items-center justify-center gap-1 md:gap-2 min-w-0'
                          }
           >
             <div className={
                               compact ? 
                               'p-0.5 rounded-lg' : 
-                              'p-1 rounded-lg md:p-1.5'
+                              'p-1 rounded-lg md:p-1.5 shrink-0'
                            }
             >
               <StageIconKB stage={stage.id} 
@@ -112,7 +112,7 @@ const StageColumn: React.FC<{
               <h3 className={
                               compact ? 
                               'font-bold text-[10px] text-white' : 
-                              'font-bold text-[11px] sm:text-xs md:text-lg text-white'
+                              'font-bold text-[9px] leading-none tracking-tight text-center whitespace-nowrap text-white sm:text-[11px] md:text-lg'
                             }
               >
                 {stage.title}
@@ -186,34 +186,40 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
     useSensor(TouchSensor, { 
       activationConstraint: { 
         delay: 0, 
-          tolerance: 2 
+          tolerance: 0 
         } 
      })                                                                                                                           //- Sets up a touch sensor for drag-and-drop interactions on touch devices, with an activation constraint that requires no delay and a tolerance of 8 pixels before the drag action is recognized.
   );
 
-  // Hide collected orders after 5 minutes
+
+  /*
+   * This useEffect hook checks for orders that have been collected within the last 5 minutes.
+   * It updates the visibleCollectedOrders state with the IDs of these orders
+   * The check is performed every 10 seconds to ensure that the list of visible collected orders is up-to-date.
+   */
   useEffect(() => {
     const checkCollectedOrders = () => {
       const now = Date.now();
-      const fiveMinutes = 5 * 60 * 1000;
+      const fiveMinutes = 5 * 60 * 1000; 
 
       const visible = new Set<string>();
       orders.forEach((order) => {
-        if (order.stage === 'collected' && order.collected_at) 
+        if (order.stage === 'collected' && order.collected_at)                                                                    //- Checks if the order is in the 'collected' stage and has a collected_at timestamp.
         {
           const collectedTime = new Date(order.collected_at).getTime();
-          if (now - collectedTime < fiveMinutes) {
+          if (now - collectedTime < fiveMinutes)                                                                                  //- Checks if the order was collected within the last 5 minutes
+          {
             visible.add(order.id);
           }
         }
       });
-      setVisibleCollectedOrders(visible);
+      setVisibleCollectedOrders(visible);                                                                                         //- Updates the state with the IDs of orders that are still within the 5-minute visibility window.
     };
 
     checkCollectedOrders();
-    const interval = setInterval(checkCollectedOrders, 10000);
-    return () => clearInterval(interval);
-  }, [orders]);
+    const interval = setInterval(checkCollectedOrders, 10000);                                                                    //- Checks every 10 seconds to update the list of visible collected orders.
+    return () => clearInterval(interval);                                                                                         //- Cleans up the interval when the component is unmounted to prevent memory leaks.
+  }, [orders]);                                                                                                                   //- The effect runs whenever the orders array changes, ensuring that the visibility of collected orders is always accurate.
 
   const getStageIdFromDragId = useCallback(
     (id: string | null): OrderStage | null => {
@@ -245,7 +251,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
   const handleDragEnd = useCallback(
     ({ over }: DragEndEvent) => {
       const destinationStage = getStageIdFromDragId(over?.id as string | null);
-      if (activeOrderId && destinationStage && activeOrderStage && destinationStage !== activeOrderStage) 
+      if (activeOrderId && destinationStage && activeOrderStage && destinationStage !== activeOrderStage)                         //- Checks if the order is being moved to a different stage
       {
         onMoveOrder(activeOrderId, destinationStage);
       }
@@ -266,8 +272,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
   const ordersByStage = STAGES.reduce((acc, stage) => {
     let stageOrders = orders.filter((order) => order.stage === stage.id);
 
-    if (stage.id === 'collected') {
-      stageOrders = stageOrders.filter((order) => visibleCollectedOrders.has(order.id));
+    if (stage.id === 'collected')                                                                                                 //- Checks if the current stage is 'collected'. 
+    {
+    stageOrders = stageOrders.filter((order) => visibleCollectedOrders.has(order.id));                                            //- If it is, filter the orders to only include those that are still within the 5-minute.
     }
 
     /*
