@@ -167,15 +167,28 @@ const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ o
   );
 };
 
+/*
+ * KanbanBoard is a React functional component that represents the entire Kanban board.
+ * It takes in an array of orders, a callback function for moving orders, and a loading state.
+ * The component uses the DndContext from @dnd-kit/core to manage drag-and-drop functionality across the entire board.
+ */
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading }) => {
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [activeOrderStage, setActiveOrderStage] = useState<OrderStage | null>(null);
   const [overStageId, setOverStageId] = useState<OrderStage | null>(null);
   const [visibleCollectedOrders, setVisibleCollectedOrders] = useState<Set<string>>(new Set());
-
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 0, tolerance: 8 } })
+    useSensor(PointerSensor, { 
+      activationConstraint: { 
+        distance: 8 
+      } 
+    }),                                                                                                                           //- Sets up a pointer sensor for drag-and-drop interactions, with an activation constraint that requires the pointer to move at least 8 pixels before the drag action is recognized.
+    useSensor(TouchSensor, { 
+      activationConstraint: { 
+        delay: 0, 
+          tolerance: 2 
+        } 
+     })                                                                                                                           //- Sets up a touch sensor for drag-and-drop interactions on touch devices, with an activation constraint that requires no delay and a tolerance of 8 pixels before the drag action is recognized.
   );
 
   // Hide collected orders after 5 minutes
