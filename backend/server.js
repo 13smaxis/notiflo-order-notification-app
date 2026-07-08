@@ -28,10 +28,15 @@ dotenv.config();                                                                
 const app = express();                                                                                                            //- Initialize Express
 app.use(express.json());                                                                                                          //- Middleware to parse JSON request bodies
 
-const supabase = createClient(
+const supabaseAdmin = createClient(
+                                    process.env.SUPABASE_URL, 
+                                    process.env.SUPABASE_SERVICE_ROLE_KEY
+);                                                                                                                               //- Create Supabase client with service role key for admin access
+
+/*const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_KEY
-);
+);*/
 
 /*
  * Health check endpoint to verify server and Supabase connection status.
@@ -40,7 +45,7 @@ const supabase = createClient(
  */
 app.get('/health', async (req, res) => {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('order_status')                                                                                                 //- Checking the 'order_status' table to ensure Supabase connection is active
             .select('count', { count: 'exact' })                                                                                  //- Requesting an exact count of rows in the 'order_status' table
             .single();                                                                                                            //- .single() ensures we get a single row, which is useful for health checks.
@@ -57,7 +62,7 @@ app.get('/health', async (req, res) => {
         res.json({
             status: 'ok',
             message: 'Server is running',
-            supabase: 'connected',
+            supabaseAdmin: 'connected',
             timestamp: new Date().toISOString()
         });                                                                                                                       // - Else return server is running and Supabase is connected, along with a timestamp.
     
@@ -77,7 +82,7 @@ app.get('/health', async (req, res) => {
  */
 app.get('/notifications/pending', async (req, res) => {
     try {
-        const { data, error } = await supabase                                                                                    //- Query the 'notification' table in Supabase to fetch pending notifications
+        const { data, error } = await supabaseAdmin                                                                                    //- Query the 'notification' table in Supabase to fetch pending notifications
             .from('notification') 
             .select(`
                         notification_id,
@@ -127,4 +132,4 @@ app.listen(PORT, () => {
   `);
 }); 
 
-export { app, supabase };                                                                                                         //- Export for testing
+export { app, supabaseAdmin };                                                                                                         //- Export for testing
