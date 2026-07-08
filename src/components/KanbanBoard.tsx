@@ -1,5 +1,6 @@
 
-import {
+import 
+{
   DndContext,
   DragOverlay,
   PointerSensor,
@@ -174,7 +175,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 75, tolerance: 5 } })
+    useSensor(TouchSensor, { activationConstraint: { delay: 0, tolerance: 8 } })
   );
 
   // Hide collected orders after 5 minutes
@@ -256,17 +257,21 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
       stageOrders = stageOrders.filter((order) => visibleCollectedOrders.has(order.id));
     }
 
+    /*
+     * Sort the orders in each stage by their creation date.
+     * This ensures that the orders are displayed in the order they were created, with the oldest orders appearing first.
+     */
     stageOrders.sort((a, b) => {
-      const dateA = new Date(a.created_at).getTime();
+      const dateA = new Date(a.created_at).getTime();                                                                             //- Convert the created_at string of order 'a' to a Date object and get the time in milliseconds.
       const dateB = new Date(b.created_at).getTime();
-      return dateB - dateA;
+      return dateA - dateB;
     });
 
-    acc[stage.id] = stageOrders;
-    return acc;
-  }, {} as Record<OrderStage, Order[]>);
+    acc[stage.id] = stageOrders;                                                                                                  //- Assign the sorted orders for the current stage to the accumulator object, using the stage's id as the key.
+    return acc;                                                                                                                   //- Return the accumulator for the next iteration of reduce.
+  }, {} as Record<OrderStage, Order[]>);                                                                                          //- Initialize the accumulator as an object with keys of type OrderStage and values of type Order[].
 
-  const activeOrder = orders.find((order) => order.id === activeOrderId) ?? null;
+  const activeOrder = orders.find((order) => order.id === activeOrderId) ?? null;                                                 //- Find the order that is currently being dragged by matching the activeOrderId with the order's id. If no matching order is found, return null.
 
   const renderStageColumn = (stage: typeof STAGES[0]) => (
     <StageColumn stage={stage} isActive={overStageId === stage.id}>
