@@ -1,25 +1,25 @@
 
-import React, { useState, useEffect } from 'react';                                                             //-useState = remember something, run code on component load
-import { useAppContext } from '@/contexts/AppContext';                                                          //-Custom hook to access app context
-import { useIsMobile } from '@/hooks/use-mobile';                                                               //-Custom hook to detect mobile devices
-import { useOrders } from '@/hooks/useOrdersAdapter';                                                           //-Custom hook to manage orders data and actions
-import { useAuth } from '@/hooks/useAuth';                                                                      //-Custom hook to manage authentication
-import { OrderStage, STAGES } from '@/types/order';                                                             //-Order stages and metadata
+import React, { useState, useEffect } from 'react';                                                                               //-useState = remember something, run code on component load
+import { useAppContext } from '@/contexts/AppContext';                                                                            //-Custom hook to access app context
+import { useIsMobile } from '@/hooks/use-mobile';                                                                                 //-Custom hook to detect mobile devices
+import { useOrders } from '@/hooks/useOrdersAdapter';                                                                             //-Custom hook to manage orders data and actions
+import { useAuth } from '@/hooks/useAuth';                                                                                        //-Custom hook to manage authentication
+import { OrderStage, STAGES } from '@/types/order';                                                                               //-Order stages and metadata
 import Header from './Header';
-import { KanbanBoard } from './KanbanBoard';                                                                        //-Kanban board component to display orders in stages
+import { KanbanBoard } from './KanbanBoard';                                                                                      //-Kanban board component to display orders in stages
 import { AddOrderModal } from './AddOrderModal';
 import SearchModal from './SearchModal';
 import { LoginModal } from './LoginModal';
-import { Plus, AlertCircle, RefreshCw, CheckCircle, X } from 'lucide-react';                                    //-Icons from lucide-react
+import { Plus, AlertCircle, RefreshCw, CheckCircle, X } from 'lucide-react';                                                      //-Icons from lucide-react
 
 /**
  * Defines the component's props/properties.
  * Used for type checking and IntelliSense support.
  */
 interface ToastProps {
-  message: string;                                                                                              //-Data type for the message to display in the toast
-  type: 'success' | 'error' | 'info';                                                                           //-Determines color
-  onClose: () => void;                                                                                          //-Called when toast is dismissed
+  message: string;                                                                                                                //-Data type for the message to display in the toast
+  type: 'success' | 'error' | 'info';                                                                                             //-Determines color
+  onClose: () => void;                                                                                                            //-Called when toast is dismissed
 }
 
 /**
@@ -27,16 +27,30 @@ interface ToastProps {
  * React.FC = React Functional Component (Gives typescript info about the component like props)
  */
 const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
-  useEffect(() => {                                                                                             //-Auto close with useEffect hook
-    const timer = setTimeout(onClose, 3000);                                                                    //-Sets a timer to automatically close the toast after 3 seconds
-    return () => clearTimeout(timer);                                                                           //-Cleans up the timer if the component unmounts early
-  }, [onClose]);                                                                                                //-Dependency array to avoid re-running effect unnecessarily
+  useEffect(() => {                                                                                                               //-Auto close with useEffect hook
+    const timer = setTimeout(onClose, 3000);                                                                                      //-Sets a timer to automatically close the toast after 3 seconds
+    return () => clearTimeout(timer);                                                                                             //-Cleans up the timer if the component unmounts early
+  }, [onClose]);                                                                                                                  //-Dependency array to avoid re-running effect unnecessarily
 
-  const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';        //-Custom background color based on type
+  const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';                          //-Custom background color based on type
   return (
     <div
-      className={`fixed bottom-20 left-1/2 -translate-x-1/2 ${bgColor} text-white px-6 py-3 rounded-xl shadow-xl flex items-center gap-3 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300`}
-    >                                                                                                           {/* Sets background color based on toast type */}
+      className={`
+                  fixed 
+                  bottom-20 left-1/2 -translate-x-1/2 
+                  ${bgColor} 
+                  text-white 
+                  px-6 py-3 
+                  rounded-xl 
+                  shadow-xl 
+                  flex items-center 
+                  gap-3 z-50 
+                  animate-in 
+                  fade-in 
+                  slide-in-from-bottom-4 
+                  duration-300
+                `}
+    >                                                                                                                             {/* Sets background color based on toast type */}
       <CheckCircle className="w-5 h-5" />
       <span className="font-medium">{message}</span>
       <button onClick={onClose} className="ml-2 hover:bg-white/20 rounded-full p-1">

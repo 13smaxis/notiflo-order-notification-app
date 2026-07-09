@@ -4,15 +4,32 @@ This folder is the backend scaffold for the Notiflo order notification app.
 
 At the moment, the backend is not implemented yet:
 
+## Backend Structure
+
+```text
+backend/
+├── package.json
+├── package-lock.json
+├── README.md
+├── server.js
+└── services/
+	├── notifications.js
+	├── supabase.js
+	└── whatsapp.js
+```
+
+## Current State
+
 - `server.js` is empty.
 - `services/supabase.js` is empty.
 - `services/notifications.js` is empty.
+- `services/whatsapp.js` is present as a placeholder for WhatsApp integration.
 - `package.json` declares the backend dependencies, but there is no start script yet.
 
 ## What is here
 
 - `server.js` - intended Express entry point
-- `services/` - placeholder for Supabase and notification integration
+- `services/` - placeholder for Supabase, notification, and WhatsApp integration
 - `package.json` - backend dependencies and metadata
 - `package-lock.json` - locked dependency versions
 

@@ -23,6 +23,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { sendPendingNotifications } from './services/whatsapp.js';
 
 dotenv.config();                                                                                                                  //- Load environment variables
 const app = express();                                                                                                            //- Initialize Express
@@ -31,7 +32,7 @@ app.use(express.json());                                                        
 const supabaseAdmin = createClient(
                                     process.env.SUPABASE_URL, 
                                     process.env.SUPABASE_SERVICE_ROLE_KEY
-);                                                                                                                               //- Create Supabase client with service role key for admin access
+);                                                                                                                                //- Create Supabase client with service role key for admin access
 
 /*const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -132,4 +133,18 @@ app.listen(PORT, () => {
   `);
 }); 
 
-export { app, supabaseAdmin };                                                                                                         //- Export for testing
+
+/*
+ * Process all pending WhatsApp notifications
+ * POST /notifications/process
+ */
+app.post('/notifications/process', async (req, res) => {
+    try {
+        const results = await processPendingWhatsAppNotifications(supabaseAdmin);
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+export { app, supabaseAdmin };                                                                                                    //- Export for testing
