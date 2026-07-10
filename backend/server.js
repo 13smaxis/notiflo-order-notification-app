@@ -23,7 +23,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
-import { sendPendingNotifications } from './services/whatsapp.js';
+import { processPendingWhatsAppNotifications } from './services/whatsapp.js';
 
 dotenv.config();                                                                                                                  //- Load environment variables
 const app = express();                                                                                                            //- Initialize Express
@@ -114,6 +114,33 @@ app.get('/notifications/pending', async (req, res) => {
 
 
 /*
+ * Poller to process pending WhatsApp notifications every 30 seconds.
+ * Logs the results of each poll to the console.
+ */
+const startWhatsAppPoller = () => {
+    console.log('⏱️  Starting WhatsApp notification poller (every 30 seconds)...');
+
+    setInterval(async () => {
+        try {
+            const results = await processPendingWhatsAppNotifications(supabaseAdmin);
+
+            if (results.processed > 0) 
+            {
+                console.log(`
+                                📊WhatsApp Poller Results:
+                                Processed: ${results.processed}
+                                Sent: ${results.sent}
+                                Failed: ${results.failed}
+        `);
+            }
+        } catch (error) {
+            console.error('❌Poller error:', error.message);
+        }
+    }, 30000);                                                                                                                    //- 30 seconds
+};
+
+
+/*
  * Start the server and listen on the specified port.
  * Logs server status, port, environment, and Supabase connection status to the console.
  */
@@ -130,12 +157,18 @@ app.listen(PORT, () => {
                 
                 📍 Health Check: http://localhost:${PORT}/health
                 📍 Pending Notifications: http://localhost:${PORT}/notifications/pending
-  `);
+                📍 Endpoints:
+                                GET  /health                          → Check server status
+                                GET  /notifications/pending           → View pending notifications
+                                POST /notifications/process           → Process pending WhatsApp notifications
+    `);
+
+    startWhatsAppPoller();                                                                                                        //- Start the WhatsApp notification poller to process pending notifications every 30 seconds  
 }); 
 
 
 /*
- * Process all pending WhatsApp notifications
+ * Process all pending WhatsApp notifications using this endpoint
  * POST /notifications/process
  */
 app.post('/notifications/process', async (req, res) => {
