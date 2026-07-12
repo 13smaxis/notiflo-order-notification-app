@@ -6,9 +6,15 @@ import { createClient } from '@supabase/supabase-js';
  * It reads the Supabase URL and anonymous key from environment variables, and throws an error if they are missing.
  * The client is then exported for use in other parts of the application. 
  */
-const _meta: any = import.meta;
-const supabaseUrl = _meta.env?.VITE_SUPABASE_URL || 'https://tztkclxftbzdcuidvtag.supabase.co';
-const supabaseKey = _meta.env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_gHWvFjJO1w6IVhmGWpn90A_8wECybXb';
+const meta = import.meta as ImportMeta & {
+  env?: {
+    VITE_SUPABASE_URL?: string;
+    VITE_SUPABASE_ANON_KEY?: string;
+  };
+};
+
+const supabaseUrl = meta.env?.VITE_SUPABASE_URL || 'https://tztkclxftbzdcuidvtag.supabase.co';
+const supabaseKey = meta.env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_gHWvFjJO1w6IVhmGWpn90A_8wECybXb';
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing Supabase credentials in environment variables');

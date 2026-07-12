@@ -24,6 +24,17 @@ interface preparingTimingData {
   collected_at: string | null;
 }
 
+type StatusHistoryEntry = {
+  changed_at: string;
+  status?: {
+    status_code?: string | null;
+  } | null;
+};
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 /**
  * Calculate preparing timing from status_history
  * Determines when preparing started, paused, accumulated time, etc.
@@ -59,11 +70,11 @@ async function calculatepreparingTiming(orderId: string): Promise<preparingTimin
     collected_at: null
   };
 
-  let previouspreparingEndTime: string | null = null;
-  let preparingedSessions: Array<{ start: string; end: string }> = [];
+  const preparingedSessions: Array<{ start: string; end: string }> = [];
+  const historyEntries = (history || []) as StatusHistoryEntry[];
 
-  for (let i = 0; i < history.length; i++) {
-    const entry = history[i] as any;
+  for (let i = 0; i < historyEntries.length; i++) {
+    const entry = historyEntries[i];
     const statusCode = entry.status?.status_code;
 
     // Track when status changed to 'preparing' (preparing started)
@@ -73,11 +84,10 @@ async function calculatepreparingTiming(orderId: string): Promise<preparingTimin
 
     // Track when status changed FROM 'preparing' to something else (preparing paused)
     if (i > 0) {
-      const prevEntry = history[i - 1] as any;
+      const prevEntry = historyEntries[i - 1];
       const prevStatusCode = prevEntry.status?.status_code;
       if (prevStatusCode === 'preparing' && statusCode !== 'preparing') {
         result.preparing_paused_at = entry.changed_at;
-        previouspreparingEndTime = entry.changed_at;
 
         // Record this preparing session
         preparingedSessions.push({
@@ -159,9 +169,9 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
         .order('sequence_order', { ascending: true });
 
       setStatuses(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Fetch statuses error:', err);
-      setError(err.message);
+      setError(getErrorMessage(err, 'Failed to fetch statuses'));
     }
   }, []);
 
@@ -203,9 +213,9 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
 
       setOrders(transformedOrders);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Fetch orders error:', err);
-      setError(err.message);
+      setError(getErrorMessage(err, 'Failed to fetch orders'));
     } finally {
       setLoading(false);
     }
@@ -323,8 +333,8 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
         }
 
         return { customerId: newCustomer.customer_id, error: null };
-      } catch (err: any) {
-        return { customerId: null, error: err.message };
+      } catch (err: unknown) {
+        return { customerId: null, error: getErrorMessage(err, 'Failed to create/find customer') };
       }
     },
     []
@@ -406,8 +416,8 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
         setOrders((prev) => [transformedOrder, ...prev]);
 
         return { data: transformedOrder, error: null };
-      } catch (err: any) {
-        return { data: null, error: err.message };
+      } catch (err: unknown) {
+        return { data: null, error: getErrorMessage(err, 'Failed to add order') };
       }
     },
     [storeId, getOrCreateCustomer, getStatusByCode]
@@ -439,8 +449,8 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
 
         // The real-time subscription will handle the update
         return { error: null };
-      } catch (err: any) {
-        return { error: err.message };
+      } catch (err: unknown) {
+        return { error: getErrorMessage(err, 'Failed to update order') };
       }
     },
     [getStatusByCode]
@@ -472,8 +482,8 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
         );
 
         return { data: transformedOrders, error: null };
-      } catch (err: any) {
-        return { data: null, error: err.message };
+      } catch (err: unknown) {
+        return { data: null, error: getErrorMessage(err, 'Failed to search orders') };
       }
     },
     [storeId]
@@ -489,8 +499,8 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
 
       if (error) throw error;
       return { error: null };
-    } catch (err: any) {
-      return { error: err.message };
+    } catch (err: unknown) {
+      return { error: getErrorMessage(err, 'Failed to delete order') };
     }
   }, []);
 

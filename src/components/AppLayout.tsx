@@ -5,12 +5,13 @@ import { useIsMobile } from '@/hooks/use-mobile';                               
 import { useOrders } from '@/hooks/useOrdersAdapter';                                                                             //-Custom hook to manage orders data and actions
 import { useAuth } from '@/hooks/useAuth';                                                                                        //-Custom hook to manage authentication
 import { OrderStage, STAGES } from '@/types/order';                                                                               //-Order stages and metadata
+import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { KanbanBoard } from './KanbanBoard';                                                                                      //-Kanban board component to display orders in stages
 import { AddOrderModal } from './AddOrderModal';
 import SearchModal from './SearchModal';
 import { LoginModal } from './LoginModal';
-import { Plus, AlertCircle, RefreshCw, CheckCircle, X } from 'lucide-react';                                                      //-Icons from lucide-react
+import { Plus, AlertCircle, RefreshCw, CheckCircle, Store, X } from 'lucide-react';                                                      //-Icons from lucide-react
 
 /**
  * Defines the component's props/properties.
@@ -69,11 +70,13 @@ export const AppLayout: React.FC = () => {
   //Contexts
   const { sidebarOpen, toggleSidebar, setUser } = useAppContext();                                             //-Pulls sidebar state, toggle function, and auth sync setter from app context
   const isMobile = useIsMobile();                                                                               //-Custom hook to detect if the device is mobile
+  const navigate = useNavigate();
 
   //Local state to control modals, login, prompts, and toasts notifications
   const [addOrderModalOpen, setAddOrderModalOpen] = useState(false);                                            //-Starts the add order modal as closed and memorises its state
   const [searchModalOpen, setSearchModalOpen] = useState(false);                                                //-Starts the search modal as closed and memorises its state
-  const [loginModalOpen, setLoginModalOpen] = useState(false);                                                  //-Starts the login modal as closed and memorises its state
+  const [authModalOpen, setAuthModalOpen] = useState(false);                                                    //-Starts the auth modal as closed and memorises its state
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');                            //-Tracks whether the auth modal is in login or register mode
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);                                                //-Controls visibility of login prompt banner
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);     //-Controls data passed to toast notifications
@@ -82,7 +85,7 @@ export const AppLayout: React.FC = () => {
 
   //Custom Hooks for Data & Auth
   const { orders, loading, error, addOrder, updateOrderStage, searchOrder, refetch } = useOrders();             //-Custom hook for fetching and updating orders(encaspulates order logic)
-  const { user, login, logout, isAuthenticated, loading: authLoading } = useAuth();                             //-Custom hook for authentication
+  const { user, logout, isAuthenticated, loading: authLoading, selectStore } = useAuth();                        //-Custom hook for authentication
 
   const displayOrders = orders.map((order) => {
     const pendingStage = pendingOrderStages[order.id];
@@ -134,6 +137,9 @@ export const AppLayout: React.FC = () => {
     setUser(user);
   }, [authLoading, user, setUser]);
 
+  const availableStores = user?.availableStores ?? [];
+  const needsStoreSelection = isAuthenticated && availableStores.length > 1 && !user?.selectedStoreId;
+
   /**
    * Login Prompt  
    * Effect hook to show login prompt banner if user is not authenticated. 
@@ -155,7 +161,8 @@ export const AppLayout: React.FC = () => {
    */
   const handleMoveOrder = async (orderId: string, newStage: OrderStage) => {
     if (!isAuthenticated) {
-      setLoginModalOpen(true);
+      setAuthModalMode('login');
+      setAuthModalOpen(true);
       return;                                                                                                   //-Exits function if not authenticated
     }
 
@@ -263,10 +270,25 @@ export const AppLayout: React.FC = () => {
   const handleOpenAddOrder = () => {
     if (!isAuthenticated)                                                                                       //-If user is not authenticated
     {
-      setLoginModalOpen(true);                                                                                  //-Open login modal
+      setAuthModalMode('login');                                                                                //-Open login modal
+      setAuthModalOpen(true);
       return;                                                                                                   //-Exit function
     }
     setAddOrderModalOpen(true);                                                                                 //-Open add order modal
+  };
+
+  const handleOpenLogin = () => {
+    setAuthModalMode('login');
+    setAuthModalOpen(true);
+  };
+
+  const handleOpenRegister = () => {
+    setAuthModalMode('register');
+    setAuthModalOpen(true);
+  };
+
+  const handleOpenDashboard = () => {
+    navigate('/dashboard');
   };
 
 
@@ -302,7 +324,9 @@ export const AppLayout: React.FC = () => {
           user={user}
           onOpenSearch={() => setSearchModalOpen(true)}
           onOpenAddOrder={handleOpenAddOrder}
-          onOpenLogin={() => setLoginModalOpen(true)}
+          onOpenLogin={handleOpenLogin}
+          onOpenRegister={handleOpenRegister}
+          onOpenDashboard={handleOpenDashboard}
           onLogout={logout}
         />                                                                                                                        {/* Header Component */}
 
@@ -461,7 +485,7 @@ export const AppLayout: React.FC = () => {
                   </button>
                 ) : (
                   <button
-                    onClick={() => setLoginModalOpen(true)}
+                    onClick={handleOpenLogin}
                     className="
                             inline-flex 
                             items-center 
@@ -522,9 +546,49 @@ export const AppLayout: React.FC = () => {
       />
 
       <LoginModal
-        isOpen={loginModalOpen}
-        onClose={() => setLoginModalOpen(false)}
+        isOpen={authModalOpen}
+        mode={authModalMode}
+        onClose={() => {
+          setAuthModalOpen(false);
+        }}
       />
+
+      {needsStoreSelection && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative w-full max-w-2xl rounded-3xl border border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-slate-100 px-6 py-5">
+              <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-900">
+                <Store className="w-4 h-4" />
+                Choose Store
+              </div>
+              <h2 className="mt-3 text-2xl font-bold text-slate-900">Select the store you want to open</h2>
+              <p className="mt-2 text-sm text-slate-600">Pick one store number and store name before continuing.</p>
+            </div>
+
+            <div className="max-h-[60vh] space-y-3 overflow-y-auto p-6 hide-scrollbar">
+              {availableStores.map((store) => (
+                <button
+                  key={store.store_id}
+                  type="button"
+                  onClick={() => selectStore(store.store_id)}
+                  className="w-full rounded-2xl border border-amber-200 bg-yellow-50 p-4 text-left transition-colors hover:border-amber-400 hover:bg-yellow-100"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-800">Store {store.store_number}</p>
+                      <p className="mt-1 text-lg font-bold text-slate-900">{store.store_name}</p>
+                    </div>
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
+                      Select
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notifications */}
       {toast && (

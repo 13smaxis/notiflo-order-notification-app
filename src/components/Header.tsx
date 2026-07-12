@@ -1,14 +1,39 @@
 import React from 'react';
-import { Search, Plus, LogOut, User } from 'lucide-react';
-//import { Staff } from '@/types/order';
+import { ChevronDown, LayoutDashboard, LogOut, Plus, Search, User, Users } from 'lucide-react';
 import { AuthUser } from '@/hooks/useAuth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
   user: AuthUser | null;
   onOpenSearch: () => void;
   onOpenAddOrder: () => void;
   onOpenLogin: () => void;
+  onOpenRegister: () => void;
+  onOpenDashboard: () => void;
   onLogout: () => void;
+}
+
+function getInitials(user: AuthUser | null) {
+  const displayName = user?.display_name?.trim() || user?.profile?.full_name?.trim() || '';
+  if (displayName) {
+    const parts = displayName.split(/\s+/).filter(Boolean);
+    return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
+  }
+
+  const emailLocalPart = user?.email.split('@')[0] ?? '';
+  const tokens = emailLocalPart.split(/[._\-\s]+/).filter(Boolean);
+  if (tokens.length >= 2) {
+    return tokens.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
+  }
+
+  const phoneDigits = user?.phone?.replace(/\D/g, '') ?? '';
+  return phoneDigits.slice(0, 2) || emailLocalPart.slice(0, 2).toUpperCase() || 'U';
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -16,8 +41,14 @@ const Header: React.FC<HeaderProps> = ({
   onOpenSearch,
   onOpenAddOrder,
   onOpenLogin,
+  onOpenRegister,
+  onOpenDashboard,
   onLogout,
 }) => {
+  const role = user?.profile?.role?.toLowerCase() ?? 'staff';
+  const canAddEmployee = role === 'owner' || role === 'manager' || role === 'supervisor';
+  const canViewDashboard = role === 'owner';
+
   return (
     <header className="
                         bg-gradient-to-r from-slate-800 to-slate-900 
@@ -56,52 +87,88 @@ const Header: React.FC<HeaderProps> = ({
             </button>
 
             {user ? (
-              <div className="
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="
+                                  flex items-center gap-3 pl-4 border-l border-slate-600
+                                  hover:opacity-90 transition-opacity
+                                "
+                    title="Account menu"
+                  >
+                    <div className="
+                                    w-10 h-10 
+                                    bg-slate-600 
+                                    rounded-full 
+                                    flex 
+                                    items-center justify-center
+                                    font-semibold text-sm tracking-wide
+                                  ">
+                      {getInitials(user)}
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-slate-300" />
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="min-w-56">
+                  <div className="px-2 py-1.5 text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                    {role}
+                  </div>
+                  {canViewDashboard && (
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenDashboard(); }}>
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  {canAddEmployee && (
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenRegister(); }}>
+                      <Users className="mr-2 h-4 w-4" />
+                      Register
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onLogout(); }}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={onOpenLogin}
+                  className="
                               flex 
                               items-center 
-                              gap-3 pl-4 
-                              border-l border-slate-600
-                            ">
-                <div className="flex items-center gap-2">
-                  <div className="
-                                  w-9 h-9 
-                                  bg-slate-600 
-                                  rounded-full 
-                                  flex 
-                                  items-center justify-center
-                                ">
-                    <User className="w-5 h-5" />
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-sm">{user.email}</p>
-                    <p className="text-xs text-slate-400">{user.profile?.role || 'Staff'}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={onLogout}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                  title="Sign Out"
+                              gap-2 px-4 py-2.5 
+                              bg-white text-slate-800 
+                              hover:bg-slate-100 
+                              rounded-full 
+                              transition-colors 
+                              font-semibold
+                            "
                 >
-                  <LogOut className="w-5 h-5" />
+                  <User className="w-5 h-5" />
+                  <span>Sign In</span>
+                </button>
+                <button
+                  onClick={() => onOpenRegister()}
+                  className="
+                              flex 
+                              items-center 
+                              gap-2 px-4 py-2.5 
+                              border border-white/30 
+                              text-white 
+                              hover:bg-white/10 
+                              rounded-full 
+                              transition-colors 
+                              font-semibold
+                            "
+                >
+                  <User className="w-5 h-5" />
+                  <span>Register</span>
                 </button>
               </div>
-            ) : (
-              <button
-                onClick={onOpenLogin}
-                className="
-                            flex 
-                            items-center 
-                            gap-2 px-4 py-2.5 
-                            bg-white text-slate-800 
-                            hover:bg-slate-100 
-                            rounded-full 
-                            transition-colors 
-                            font-semibold
-                          "
-              >
-                <User className="w-5 h-5" />
-                <span>Sign In</span>
-              </button>
             )}
           </div>
 
@@ -119,23 +186,75 @@ const Header: React.FC<HeaderProps> = ({
               <Search className="w-5 h-5" />
             </button>
 
-            <button
-              onClick={onOpenLogin}
-              className="
-                          flex items-center 
-                          gap-2 
-                          px-3 py-2 
-                          rounded-2xl 
-                          bg-slate-700 
-                          hover:bg-slate-600 
-                          transition-colors
-                        "
-            >
-              <User className="w-5 h-5" />
-              <span className="text-sm font-medium truncate max-w-[4rem]">
-                {user ? user.email.charAt(0).toUpperCase() : 'Sign In'}
-              </span>
-            </button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="
+                                flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-700 hover:bg-slate-600 transition-colors
+                              "
+                  >
+                    <span className="text-sm font-semibold tracking-wide">{getInitials(user)}</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-56">
+                  <div className="px-2 py-1.5 text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                    {role}
+                  </div>
+                  {canViewDashboard && (
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenDashboard(); }}>
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  {canAddEmployee && (
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenRegister(); }}>
+                      <Users className="mr-2 h-4 w-4" />
+                      Register
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onLogout(); }}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onOpenLogin}
+                  className="
+                              flex items-center 
+                              gap-2 
+                              px-3 py-2 
+                              rounded-2xl 
+                              bg-slate-700 
+                              hover:bg-slate-600 
+                              transition-colors
+                            "
+                >
+                  <User className="w-5 h-5" />
+                  <span className="text-sm font-medium">Sign In</span>
+                </button>
+                <button
+                  onClick={() => onOpenRegister()}
+                  className="
+                              flex items-center 
+                              gap-2 
+                              px-3 py-2 
+                              rounded-2xl 
+                              border border-white/30 
+                              hover:bg-white/10 
+                              transition-colors
+                            "
+                >
+                  <User className="w-5 h-5" />
+                  <span className="text-sm font-medium">Register</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -17,5 +17,5 @@ import { useAppContext } from '@/contexts/AppContext';
 export function useOrders() 
 {
   const { storeId } = useAppContext();
-  return useOrdersRemote(storeId); //- 
+  return useOrdersRemote(storeId);
 }

@@ -9,6 +9,10 @@ import {
   deleteOrderLocal
 } from '@/lib/local-db';
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function useOrdersLocal() 
 {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -21,8 +25,8 @@ export function useOrdersLocal()
       seedDemoOrdersIfNeeded();
       setOrders(listOrders());
       setError(null);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to load orders');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to load orders'));
     } finally {
       setLoading(false);
     }
@@ -58,8 +62,8 @@ export function useOrdersLocal()
       const created = addOrderLocal(orderData);
       setOrders((prev) => [created, ...prev]);
       return { data: created, error: null as null };
-    } catch (err: any) {
-      return { data: null, error: err?.message || 'Failed to add order' };
+    } catch (err: unknown) {
+      return { data: null, error: getErrorMessage(err, 'Failed to add order') };
     }
   };
 
@@ -73,8 +77,8 @@ export function useOrdersLocal()
         await sendSmsNotification(order.customer_phone, order.order_number, 'ready');
       }
       return { error: null as null };
-    } catch (err: any) {
-      return { error: err?.message || 'Failed to update order' };
+    } catch (err: unknown) {
+      return { error: getErrorMessage(err, 'Failed to update order') };
     }
   };
 
@@ -82,8 +86,8 @@ export function useOrdersLocal()
     try {
       const data = searchOrdersLocal(orderNumber);
       return { data, error: null as null };
-    } catch (err: any) {
-      return { data: null, error: err?.message || 'Failed to search' };
+    } catch (err: unknown) {
+      return { data: null, error: getErrorMessage(err, 'Failed to search') };
     }
   };
 
@@ -92,8 +96,8 @@ export function useOrdersLocal()
       deleteOrderLocal(orderId);
       setOrders(listOrders());
       return { error: null as null };
-    } catch (err: any) {
-      return { error: err?.message || 'Failed to delete' };
+    } catch (err: unknown) {
+      return { error: getErrorMessage(err, 'Failed to delete') };
     }
   };
 

@@ -15,10 +15,9 @@ function nowISO() {
 }
 
 function uuid() {
-  try {
-    // @ts-ignore
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-  } catch {}
+  if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
   return 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
@@ -46,7 +45,8 @@ function getAllOrders(): Order[] {
       saveAllOrders(normalized);
     }
     return normalized;
-  } catch {
+  } catch (error) {
+    void error;
     return [];
   }
 }

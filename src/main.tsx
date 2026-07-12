@@ -11,7 +11,7 @@ import './index.css'                                                            
 if ('serviceWorker' in navigator)                                                                               //-Check if the browser supports service workers
 {
   window.addEventListener('load', () => {                                                                       //-Wait for the window to load completely
-    const isDev = (import.meta as any).env?.DEV === true;                                                       //-Avoid stale cache and old builds during local development
+    const isDev = import.meta.env.DEV === true;                                                                 //-Avoid stale cache and old builds during local development
 
     if (isDev) {
       navigator.serviceWorker.getRegistrations()

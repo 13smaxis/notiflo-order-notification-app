@@ -1,7 +1,7 @@
 
 import { useAppContext } from '@/contexts/AppContext';
 import { useOrders } from '@/hooks/useOrders';
-import { Plus, Hash, DollarSign, X, Phone } from 'lucide-react';
+import { Plus, Hash, X, Phone } from 'lucide-react';
 import React from 'react';
 
 interface AddOrderModalProps {
@@ -21,14 +21,24 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, o
   const [localError, setLocalError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
 
+  const generateOrderNumber = React.useCallback(() => {
+    return String(Math.floor(100 + Math.random() * 900));
+  }, []);
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    setOrderNumber(generateOrderNumber());
+    setLocalError(null);
+  }, [generateOrderNumber, isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
 
-    if (!orderNumber.trim()) {
-      setLocalError('Order number is required');
-      return;
-    }
+    const generatedOrderNumber = orderNumber.trim() || generateOrderNumber();
 
     if (!totalAmount || parseFloat(totalAmount) <= 0) {
       setLocalError('Please enter a valid amount');
@@ -44,7 +54,7 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, o
 
     try {
       const { data, error } = await addOrder({
-        order_number: orderNumber.trim(),
+        order_number: generatedOrderNumber,
         customer_phone: customerPhone.trim(),
         total_amount: parseFloat(totalAmount),
         customer_name: customerName.trim() || undefined
@@ -111,8 +121,8 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, o
               <input
                 type="text"
                 value={orderNumber}
-                onChange={(e) => setOrderNumber(e.target.value)}
-                placeholder="e.g., 001"
+                readOnly
+                placeholder="Auto-generated"
                 className="
                             w-full 
                             pl-11 pr-4 py-3 

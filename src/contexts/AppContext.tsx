@@ -1,13 +1,5 @@
-// src/contexts/AppContext.tsx - Updated with user state
-
 import React, { createContext, useContext, useState } from 'react';
-import { Profile } from '@/types/order';
-
-export interface AuthUser {
-  auth_user_id: string;
-  email: string;
-  profile: Profile | null;
-}
+import type { AuthUser } from '@/hooks/useAuth';
 
 interface AppContextType {
   // Sidebar
@@ -36,7 +28,7 @@ const AppContext = createContext<AppContextType>(defaultAppContext);
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAppContext must be used within AppProvider');
   }
   return context;
@@ -51,7 +43,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Derived values
-  const storeId = user?.profile?.store_id ?? null;
+  const storeId = user?.selectedStoreId ?? user?.profile?.store_id ?? null;
   const userRole = user?.profile?.role ?? null;
 
   return (

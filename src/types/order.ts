@@ -68,7 +68,7 @@ export interface Order extends DatabaseOrder {
 
 export interface Staff {
   role: ReactNode;
-  full_name: any;
+  full_name: string;
   auth_user_id: string;
   email: string;
   profile: Profile;
@@ -78,13 +78,19 @@ export interface Profile {
   auth_user_id: string;
   store_id?: string;
   role?: string;
+  full_name?: string;
+  store_name?: string;
+  store_number?: number;
+  store_phone?: string;
+  shop_name?: string;
+  shop_number?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface Store {
   store_id: string;
-  store_number: string;
+  store_number: number;
   store_name: string;
   store_phone?: string;
   created_at: string;
