@@ -67,8 +67,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           return;
         }
 
-        if (!/^\+\d{9}$/.test(loginPhoneNumber.trim())) {
-          setError('Phone number must be + followed by nine digits');
+        if (!/^0\d{9}$/.test(loginPhoneNumber.trim())) {
+          setError('Phone number must be 0 followed by nine digits');
           return;
         }
 
@@ -96,8 +96,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         return;
       }
 
-      if (!/^\+\d{9}$/.test(registerPhoneNumber.trim())) {
-        setError('Phone number must be + followed by nine digits');
+      if (!/^0\d{9}$/.test(registerPhoneNumber.trim())) {
+        setError('Phone number must be 0 followed by nine digits');
         return;
       }
 
@@ -180,14 +180,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <button
               type="button"
               onClick={() => setCurrentMode('login')}
-              className={`rounded-xl px-4 py-2 font-semibold transition-colors ${isLoginMode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+              className={`rounded-xl px-4 py-2 font-semibold transition-colors border ${isLoginMode ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-white/70 text-slate-600 border-slate-200'}`}
             >
               Sign In
             </button>
             <button
               type="button"
               onClick={() => setCurrentMode('register')}
-              className={`rounded-xl px-4 py-2 font-semibold transition-colors ${!isLoginMode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+              className={`rounded-xl px-4 py-2 font-semibold transition-colors border ${!isLoginMode ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-white/70 text-slate-600 border-slate-200'}`}
             >
               Register
             </button>
@@ -213,7 +213,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 type={isLoginMode ? 'text' : 'email'}
                 value={isLoginMode ? loginPhoneNumber : registerEmail}
                 onChange={(e) => (isLoginMode ? setLoginPhoneNumber(e.target.value) : setRegisterEmail(e.target.value))}
-                placeholder={isLoginMode ? '+123456789' : 'you@example.com'}
+                placeholder={isLoginMode ? '0123456789' : 'you@example.com'}
                 className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl text-gray-900 focus:border-amber-500 focus:ring-0 outline-none transition-colors"
                 autoFocus
               />
@@ -229,10 +229,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   <Input
                     type="text"
                     inputMode="tel"
-                    pattern="^\\+\\d{9}$"
+                    pattern="^0\\d{9}$"
                     value={registerPhoneNumber}
                     onChange={(event) => setRegisterPhoneNumber(event.target.value)}
-                    placeholder="+123456789"
+                    placeholder="0123456789"
                     className="pl-11"
                   />
                 </div>
@@ -284,7 +284,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 </Select>
               </div>
 
-              <div className="rounded-2xl bg-yellow-50 border border-yellow-200 p-4">
+              <div className="rounded-2xl bg-yellow-100 border border-yellow-200 p-4">
                 <Label className="mb-2 block text-sm font-semibold text-yellow-900">For Office Use</Label>
                 <Input
                   value={officeUseEmployeeNumber}

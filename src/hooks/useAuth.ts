@@ -47,7 +47,7 @@ function normalizePhoneNumber(phoneNumber: string): string {
 }
 
 function isValidPhoneNumber(phoneNumber: string): boolean {
-  return /^\+\d{9}$/.test(phoneNumber.trim());
+  return /^0\d{9}$/.test(phoneNumber.trim());
 }
 
 function isPositiveInteger(value: string): boolean {
