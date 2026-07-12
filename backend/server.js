@@ -1,18 +1,16 @@
-
 /*
- * Backend Server for NotiFlo Order Notification App
+ * Backend Server for NotiFlo Order Notification App - WITH SMS FALLBACK
     * ==================================================================================================
     * This server handles API requests for the NotiFlo application, 
-    * This includes health checks and fetching pending notifications.
-    * It connects to a Supabase database to retrieve notification data.
+    * including WhatsApp notifications with SMS fallback.
     * ==================================================================================================
     * Author: SM-AX
     * Date: 2026-07-08
-    * Version: 1.0.0
+    * Version: 2.0.0 (with SMS fallback)
     * ==================================================================================================
     * Environment Variables:
     * - SUPABASE_URL: Your Supabase project URL
-    * - SUPABASE_KEY: Your Supabase API key
+    * - SUPABASE_SERVICE_ROLE_KEY: Your Supabase Service Role Key
     * - TWILIO_ACCOUNT_SID: Your Twilio Account SID
     * - TWILIO_AUTH_TOKEN: Your Twilio Auth Token
     * - TWILIO_PHONE_NUMBER: Your Twilio phone number for SMS
@@ -24,6 +22,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { processPendingWhatsAppNotifications } from './services/whatsapp.js';
+import { processPendingSMSNotifications } from './services/sms.js';
 
 dotenv.config();                                                                                                                  //- Load environment variables
 const app = express();                                                                                                            //- Initialize Express
@@ -33,11 +32,6 @@ const supabaseAdmin = createClient(
                                     process.env.SUPABASE_URL, 
                                     process.env.SUPABASE_SERVICE_ROLE_KEY
 );                                                                                                                                //- Create Supabase client with service role key for admin access
-
-/*const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY
-);*/
 
 /*
  * Health check endpoint to verify server and Supabase connection status.
@@ -112,31 +106,51 @@ app.get('/notifications/pending', async (req, res) => {
     }
 });
 
-
 /*
- * Poller to process pending WhatsApp notifications every 30 seconds.
- * Logs the results of each poll to the console.
+ * AUTO-POLLING FUNCTIONS
+ * Process notifications in the background every 30 seconds
  */
+
 const startWhatsAppPoller = () => {
-    console.log('⏱️  Starting WhatsApp notification poller (every 30 seconds)...');
+    console.log('📱 Starting WhatsApp notification poller (every 30 seconds)...');
 
     setInterval(async () => {
         try {
             const results = await processPendingWhatsAppNotifications(supabaseAdmin);
 
-            if (results.processed > 0) 
-            {
+            if (results.processed > 0) {
                 console.log(`
-                                📊WhatsApp Poller Results:
-                                Processed: ${results.processed}
-                                Sent: ${results.sent}
-                                Failed: ${results.failed}
+📊 WhatsApp Poller Results:
+   Processed: ${results.processed}
+   Sent: ${results.sent}
+   Failed: ${results.failed}
         `);
             }
         } catch (error) {
-            console.error('❌Poller error:', error.message);
+            console.error('❌ WhatsApp Poller error:', error.message);
         }
-    }, 30000);                                                                                                                    //- 30 seconds
+    }, 30000); // 30 seconds
+};
+
+const startSMSPoller = () => {
+    console.log('💬 Starting SMS notification poller (every 30 seconds)...');
+
+    setInterval(async () => {
+        try {
+            const results = await processPendingSMSNotifications(supabaseAdmin);
+
+            if (results.processed > 0) {
+                console.log(`
+📊 SMS Poller Results:
+   Processed: ${results.processed}
+   Sent: ${results.sent}
+   Failed: ${results.failed}
+        `);
+            }
+        } catch (error) {
+            console.error('❌ SMS Poller error:', error.message);
+        }
+    }, 30000); // 30 seconds
 };
 
 
@@ -160,21 +174,46 @@ app.listen(PORT, () => {
                 📍 Endpoints:
                                 GET  /health                          → Check server status
                                 GET  /notifications/pending           → View pending notifications
-                                POST /notifications/process           → Process pending WhatsApp notifications
+                                POST /notifications/process-whatsapp   → Process pending WhatsApp notifications
+                                POST /notifications/process-sms        → Process pending SMS notifications
+
+                🔄 Auto-Polling:
+                   ✅ WhatsApp (every 30 seconds)
+                   ✅ SMS Fallback (every 30 seconds)
     `);
 
     startWhatsAppPoller();                                                                                                        //- Start the WhatsApp notification poller to process pending notifications every 30 seconds  
+    startSMSPoller();                                                                                                             //- Start the SMS notification poller to send SMS fallback messages
 }); 
 
 
 /*
  * Process all pending WhatsApp notifications using this endpoint
- * POST /notifications/process
+ * POST /notifications/process-whatsapp
  */
-app.post('/notifications/process', async (req, res) => {
+app.post('/notifications/process-whatsapp', async (req, res) => {
     try {
         const results = await processPendingWhatsAppNotifications(supabaseAdmin);
-        res.json(results);
+        res.json({
+            message: 'WhatsApp notifications processed',
+            results
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/*
+ * Process all pending SMS notifications using this endpoint
+ * POST /notifications/process-sms
+ */
+app.post('/notifications/process-sms', async (req, res) => {
+    try {
+        const results = await processPendingSMSNotifications(supabaseAdmin);
+        res.json({
+            message: 'SMS notifications processed',
+            results
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

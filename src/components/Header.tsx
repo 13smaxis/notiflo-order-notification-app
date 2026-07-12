@@ -4,12 +4,11 @@ import { Search, Plus, LogOut, User } from 'lucide-react';
 import { AuthUser } from '@/hooks/useAuth';
 
 interface HeaderProps {
-  user: AuthUser | null;  
+  user: AuthUser | null;
   onOpenSearch: () => void;
   onOpenAddOrder: () => void;
   onOpenLogin: () => void;
   onLogout: () => void;
-  orderCount: number;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -18,7 +17,6 @@ const Header: React.FC<HeaderProps> = ({
   onOpenAddOrder,
   onOpenLogin,
   onLogout,
-  orderCount
 }) => {
   return (
     <header className="
@@ -27,62 +25,35 @@ const Header: React.FC<HeaderProps> = ({
                         sticky top-0 z-40 
                         rounded-full
                         mx-2 md:mx-4 my-2 
-                      "
-    >                                                                                                           {/* Header */}
-      <div className="max-w-7xl mx-auto px-3 md:px-4">                                                          {/* Header Container */}
-        <div className="flex items-center justify-between h-24 md:h-28">                                        {/* Header Content */}
-         <div className="flex items-center gap-3">
-          <div className="
-                          h-16 w-32
-                          sm:h-20 sm:w-40
-                          md:h-24 md:w-48
-                          flex-shrink-0
-                          overflow-hidden
-                          relative
-                        "
-          >                                                                                                     {/* Logo Container */}
-            <img
-              src="/logo.png"
-              alt="NotiFlo logo"
-              className="
-                          h-full w-full
-                          object-contain
-                        "
-            />
+                      ">
+      <div className="max-w-7xl mx-auto px-3 md:px-4">
+        <div className="flex items-center justify-between h-24 md:h-28">
+          <div className="flex items-center gap-3">
+            <div className="
+                            h-16 w-32
+                            sm:h-20 sm:w-40
+                            md:h-24 md:w-48
+                            flex-shrink-0
+                            overflow-hidden
+                          ">
+              <img
+                src="/logo.png"
+                alt="NotiFlo logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
           </div>
-        </div>
-          
-          <div className="hidden md:flex items-center gap-4">                                                   {/* Desktop Navigation container*/}
-                        <button
+
+          <div className="hidden md:flex items-center gap-4">
+            <button
               onClick={onOpenSearch}
               className="
                           flex items-center 
                           gap-2 px-4 py-2.5 
- transition-colors"
-            >                                                                                                   {/* Search Button */}
-                <Search className="w-5 h-5" />
-            
+                          transition-colors"
+            >
+              <Search className="w-5 h-5" />
             </button>
-
-            <div className="
-                            bg-slate-700/50 
-                            rounded-xl 
-                            px-4 py-2 
-                            flex items-center 
-                            gap-3
-                          "
-            >                                                                                                   {/* Active Order Stats */}
-              <div className="text-center">
-                <p className="text-2xl font-bold text-amber-400">
-                  {orderCount}
-                </p>
-                <p className="text-xs text-slate-400">
-                  Active Orders
-                </p>
-              </div>
-            </div>
-            
-
 
             {user ? (
               <div className="
@@ -90,8 +61,7 @@ const Header: React.FC<HeaderProps> = ({
                               items-center 
                               gap-3 pl-4 
                               border-l border-slate-600
-                            "
-              >                                                                                                 {/* User Section */}
+                            ">
                 <div className="flex items-center gap-2">
                   <div className="
                                   w-9 h-9 
@@ -99,13 +69,12 @@ const Header: React.FC<HeaderProps> = ({
                                   rounded-full 
                                   flex 
                                   items-center justify-center
-                                "
-                  >
+                                ">
                     <User className="w-5 h-5" />
                   </div>
                   <div className="text-right">
                     <p className="font-medium text-sm">{user.email}</p>
-                    <p className="text-xs text-slate-400">{user.profile?.role || 'Staff'}</p> 
+                    <p className="text-xs text-slate-400">{user.profile?.role || 'Staff'}</p>
                   </div>
                 </div>
                 <button
@@ -129,11 +98,9 @@ const Header: React.FC<HeaderProps> = ({
                             transition-colors 
                             font-semibold
                           "
-              >                                                                                                 {/* Sign In Button */}
+              >
                 <User className="w-5 h-5" />
-                  <span>
-                    Sign In
-                  </span>
+                <span>Sign In</span>
               </button>
             )}
           </div>
@@ -144,34 +111,13 @@ const Header: React.FC<HeaderProps> = ({
                             gap-2 
                             min-w-0 
                             md:hidden
-                          "
-          >                                                                                                     {/* Mobile Navigation container*/}
+                          ">
             <button
               onClick={onOpenSearch}
-              className="
-                          px-3
-                          transition-colors
-                        "
-            >                                                                                                   {/* Search Button */}
+              className="px-3 transition-colors"
+            >
               <Search className="w-5 h-5" />
             </button>
-                                                                                                                 
-            <div className="
-                              flex
-                              text-amber-400 
-                              font-semibold text-sm
-                              justify-center
-                            "
-            >                                                                                                   {/* Order Count total */}
-              <div className="text-center">
-                <p className="text-2xl font-bold text-amber-400">
-                  {orderCount}
-                </p>
-                <p className="text-[0.5rem] text-slate-400">
-                  Active Orders
-                </p>
-              </div>
-            </div>
 
             <button
               onClick={onOpenLogin}
@@ -186,8 +132,8 @@ const Header: React.FC<HeaderProps> = ({
                         "
             >
               <User className="w-5 h-5" />
-                <span className="text-sm font-medium truncate max-w-[4rem]">
-                  {user ? user.email.charAt(0).toUpperCase() : 'Sign In'} 
+              <span className="text-sm font-medium truncate max-w-[4rem]">
+                {user ? user.email.charAt(0).toUpperCase() : 'Sign In'}
               </span>
             </button>
           </div>
@@ -197,7 +143,20 @@ const Header: React.FC<HeaderProps> = ({
       {user && (
         <button
           onClick={onOpenAddOrder}
-          className="hidden md:flex fixed bottom-6 right-6 z-50 h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 shadow-2xl transition hover:from-amber-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-amber-400"
+          className="
+                      hidden md:flex 
+                      fixed bottom-6 right-6 
+                      z-50 
+                      h-16 w-16 
+                      items-center justify-center 
+                      rounded-full 
+                      bg-gradient-to-r from-amber-500 to-orange-500 
+                      text-slate-900 
+                      shadow-2xl 
+                      transition 
+                      hover:from-amber-600 hover:to-orange-600 
+                      focus:outline-none focus:ring-2 focus:ring-amber-400
+                    "
           title="Add Order"
         >
           <Plus className="w-6 h-6" />

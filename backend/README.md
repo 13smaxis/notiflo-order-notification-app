@@ -1,52 +1,59 @@
 # Backend
 
-This folder is the backend scaffold for the Notiflo order notification app.
+This folder contains the NotiFlo notification backend, built with Express, Supabase, and Twilio.
 
-At the moment, the backend is not implemented yet:
-
-## Backend Structure
+## Structure
 
 ```text
 backend/
 ├── package.json
 ├── package-lock.json
+├── .env                # local secrets/config (not committed)
+├── .gitignore
 ├── README.md
 ├── server.js
 └── services/
-	├── notifications.js
-	├── supabase.js
+	├── notifications.js   # scaffold / placeholder
+	├── sms.js
+	├── supabase.js        # scaffold / placeholder
 	└── whatsapp.js
 ```
 
-## Current State
+## What it does
 
-- `server.js` is empty.
-- `services/supabase.js` is empty.
-- `services/notifications.js` is empty.
-- `services/whatsapp.js` is present as a placeholder for WhatsApp integration.
-- `package.json` declares the backend dependencies, but there is no start script yet.
+- Starts an Express server with JSON parsing enabled.
+- Checks Supabase connectivity through a `/health` endpoint.
+- Lists pending notifications from Supabase.
+- Processes WhatsApp notifications and SMS fallback notifications.
+- Runs background pollers every 30 seconds for WhatsApp and SMS.
 
-## What is here
+## API endpoints
 
-- `server.js` - intended Express entry point
-- `services/` - placeholder for Supabase, notification, and WhatsApp integration
-- `package.json` - backend dependencies and metadata
-- `package-lock.json` - locked dependency versions
+- `GET /health` - server and Supabase health check
+- `GET /notifications/pending` - list pending notifications
+- `POST /notifications/process-whatsapp` - process pending WhatsApp notifications
+- `POST /notifications/process-sms` - process pending SMS notifications
 
-## Setup
+## Environment variables
 
-1. Install dependencies:
+Create a local `.env` file with the backend secrets used by `server.js`:
 
-```bash
-npm install
-```
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_PHONE_NUMBER`
+- `TWILIO_WHATSAPP_NUMBER`
+- `PORT` (optional, defaults to `3000`)
 
-2. Add any backend secrets to a local `.env` file.
+## Scripts
 
-3. Implement the server entry point and service modules before trying to run the backend.
+- Install: `npm install`
+- Start: `npm start`
+- Dev watch: `npm run dev`
 
 ## Notes
 
-- The backend currently depends on `express`, `dotenv`, `@supabase/supabase-js`, and `twilio`.
-- Because the server has not been wired up yet, there are no API routes, background jobs, or run commands to document yet.
-- If you want, this README can be expanded later with environment variables, API routes, and deployment steps once the backend is implemented.
+- The backend is ESM-based (`"type": "module"`).
+- The current implementation expects the Supabase tables used by the notification pollers to already exist.
+- `services/notifications.js` and `services/supabase.js` are currently placeholders.

@@ -270,8 +270,6 @@ export const AppLayout: React.FC = () => {
   };
 
 
-  const activeOrderCount = displayOrders.filter((order) => order.stage !== 'collected').length;                 //-Counts active orders (not collected)
-
   /**
    * Counts number of orders in each stage for quick stats bar
    * Used to display the number of orders in each stage at the top of the layout
@@ -306,7 +304,6 @@ export const AppLayout: React.FC = () => {
           onOpenAddOrder={handleOpenAddOrder}
           onOpenLogin={() => setLoginModalOpen(true)}
           onLogout={logout}
-          orderCount={activeOrderCount}
         />                                                                                                                        {/* Header Component */}
 
         <div className="max-w-7xl mx-auto px-3 md:px-4 py-3">                                                                     {/* Quick Stats Bar */}

@@ -1,4 +1,4 @@
-// services/whatsapp.js - Send WhatsApp notifications via Twilio
+// services/sms.js - Send SMS notifications via Twilio
 // WITH PHONE NUMBER FORMAT CONVERSION (SA 0XXXXXXXXX → +27XXXXXXXXX)
 
 import twilio from 'twilio';
@@ -14,6 +14,7 @@ const twilioClient = twilio(
 
 /**
  * Convert SA phone number format
+ * 0627680710 → +27627680710
  * @param {string} phone - Phone number in format 0XXXXXXXXX
  * @returns {string} International format +27XXXXXXXXX
  */
@@ -38,12 +39,12 @@ const convertPhoneNumber = (phone) => {
 };
 
 /**
- * Send a single WhatsApp message
+ * Send a single SMS message
  * @param {string} customerPhone - Customer phone number (format: 0XXXXXXXXX or +27XXXXXXXXX)
  * @param {string} message - Message text
  * @returns {Promise<object>} Twilio response
  */
-export const sendWhatsAppMessage = async (customerPhone, message) => {
+export const sendSMSMessage = async (customerPhone, message) => {
   try {
     // Convert phone number to international format
     const internationalPhone = convertPhoneNumber(customerPhone);
@@ -57,8 +58,8 @@ export const sendWhatsAppMessage = async (customerPhone, message) => {
     }
 
     const result = await twilioClient.messages.create({
-      from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
-      to: `whatsapp:${internationalPhone}`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: internationalPhone,
       body: message
     });
 
@@ -79,72 +80,29 @@ export const sendWhatsAppMessage = async (customerPhone, message) => {
 };
 
 /**
- * Create an SMS fallback notification
- * Called when WhatsApp fails - creates a pending SMS notification
- * @param {object} supabase - Supabase client
- * @param {string} orderId - Order ID
- * @param {string} statusHistoryId - Status history ID
- * @param {string} message - Message text
- * @returns {Promise<object>} Insert result
- */
-const createSMSFallback = async (supabase, orderId, statusHistoryId, message) => {
-  try {
-    const { data, error } = await supabase
-      .from('notification')
-      .insert([
-        {
-          order_id: orderId,
-          status_history_id: statusHistoryId,
-          notification_type: 'status_update',
-          channel: 'sms',  // ← SMS fallback
-          message_text: message,
-          delivery_status: 'pending',  // ← Will be processed by SMS poller
-          delivery_attempt_number: 1,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ]);
-
-    if (error) {
-      console.error(`❌ Failed to create SMS fallback: ${error.message}`);
-      return { success: false, error: error.message };
-    }
-
-    console.log(`📱➡️💬 SMS Fallback created for order ${orderId}`);
-    return { success: true, data };
-  } catch (error) {
-    console.error(`❌ Error creating SMS fallback: ${error.message}`);
-    return { success: false, error: error.message };
-  }
-};
-
-/**
- * Process all pending WhatsApp notifications
- * - Fetch pending WhatsApp messages from database
+ * Process all pending SMS notifications
+ * - Fetch pending SMS messages from database
  * - Convert phone number format
  * - Send each one via Twilio
- * - If WhatsApp fails → CREATE SMS fallback notification
- * - Update WhatsApp notification status
+ * - Update notification status (sent/failed)
  * @param {object} supabase - Supabase client
  * @returns {Promise<object>} Processing results
  */
-export const processPendingWhatsAppNotifications = async (supabase) => {
+export const processPendingSMSNotifications = async (supabase) => {
   const results = {
     processed: 0,
     sent: 0,
     failed: 0,
-    fallbacks_created: 0,
     errors: []
   };
 
   try {
-    // Step 1: Fetch pending WhatsApp notifications
+    // Step 1: Fetch pending SMS notifications
     const { data: pendingNotifications, error: fetchError } = await supabase
       .from('notification')
       .select(`
         notification_id,
         order_id,
-        status_history_id,
         message_text,
         delivery_attempt_number,
         orders (
@@ -156,9 +114,9 @@ export const processPendingWhatsAppNotifications = async (supabase) => {
         )
       `)
       .eq('delivery_status', 'pending')
-      .eq('channel', 'whatsapp')
+      .eq('channel', 'sms')
       .order('created_at', { ascending: true })
-      .limit(50); // Process 50 at a time
+      .limit(10); // Process 10 at a time
 
     if (fetchError) {
       results.errors.push(`Database fetch error: ${fetchError.message}`);
@@ -166,11 +124,11 @@ export const processPendingWhatsAppNotifications = async (supabase) => {
     }
 
     if (!pendingNotifications || pendingNotifications.length === 0) {
-      console.log('✅ No pending WhatsApp notifications to process');
+      // Silently return (no SMS to send)
       return results;
     }
 
-    console.log(`📱 Processing ${pendingNotifications.length} WhatsApp notifications...`);
+    console.log(`💬 Processing ${pendingNotifications.length} SMS notifications...`);
 
     // Step 2: Send each notification
     for (const notification of pendingNotifications) {
@@ -180,14 +138,12 @@ export const processPendingWhatsAppNotifications = async (supabase) => {
         const rawPhone = notification.orders?.customer?.customer_phone;
         const message = notification.message_text;
         const notificationId = notification.notification_id;
-        const orderId = notification.order_id;
-        const statusHistoryId = notification.status_history_id;
 
         if (!rawPhone) {
-          console.log(`⚠️  Notification ${notificationId}: No customer phone found`);
+          console.log(`⚠️  SMS Notification ${notificationId}: No customer phone found`);
           results.failed++;
           
-          // Update as failed (don't create SMS fallback if no phone)
+          // Update as failed
           await supabase
             .from('notification')
             .update({
@@ -203,13 +159,13 @@ export const processPendingWhatsAppNotifications = async (supabase) => {
 
         // Convert phone number to international format
         const internationalPhone = convertPhoneNumber(rawPhone);
-        console.log(`📱 Sending WhatsApp to ${rawPhone} (converted: ${internationalPhone})`);
+        console.log(`💬 Sending SMS to ${rawPhone} (converted: ${internationalPhone})`);
 
         // Send via Twilio
-        const sendResult = await sendWhatsAppMessage(rawPhone, message);
+        const sendResult = await sendSMSMessage(rawPhone, message);
 
         if (sendResult.success) {
-          console.log(`✅ WhatsApp sent to ${internationalPhone} (SID: ${sendResult.sid})`);
+          console.log(`✅ SMS sent to ${internationalPhone} (SID: ${sendResult.sid})`);
           results.sent++;
 
           // Update notification as sent
@@ -224,11 +180,10 @@ export const processPendingWhatsAppNotifications = async (supabase) => {
             .eq('notification_id', notificationId);
 
         } else {
-          // ❌ WhatsApp FAILED - Create SMS Fallback
-          console.log(`❌ WhatsApp failed for ${internationalPhone}: ${sendResult.error}`);
+          console.log(`❌ SMS failed for ${internationalPhone}: ${sendResult.error}`);
           results.failed++;
 
-          // Update WhatsApp notification as failed
+          // Update notification as failed
           await supabase
             .from('notification')
             .update({
@@ -238,37 +193,25 @@ export const processPendingWhatsAppNotifications = async (supabase) => {
               updated_at: new Date().toISOString()
             })
             .eq('notification_id', notificationId);
-
-          // CREATE SMS Fallback notification
-          const fallbackResult = await createSMSFallback(
-            supabase,
-            orderId,
-            statusHistoryId,
-            message
-          );
-
-          if (fallbackResult.success) {
-            results.fallbacks_created++;
-          }
         }
 
       } catch (error) {
         results.failed++;
-        results.errors.push(`Error processing notification: ${error.message}`);
+        results.errors.push(`Error processing SMS notification: ${error.message}`);
         console.error('❌ Error:', error.message);
       }
     }
 
   } catch (error) {
     results.errors.push(`Fatal error: ${error.message}`);
-    console.error('❌ Fatal error:', error.message);
+    console.error('❌ Fatal SMS error:', error.message);
   }
 
   return results;
 };
 
 export default {
-  sendWhatsAppMessage,
-  processPendingWhatsAppNotifications,
+  sendSMSMessage,
+  processPendingSMSNotifications,
   convertPhoneNumber
 };
