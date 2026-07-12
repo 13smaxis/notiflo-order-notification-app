@@ -331,49 +331,36 @@ export const AppLayout: React.FC = () => {
         />                                                                                                                        {/* Header Component */}
 
         <div className="max-w-7xl mx-auto px-3 md:px-4 py-3">                                                                     {/* Quick Stats Bar */}
-          <div className="
-                          flex 
-                          items-center 
-                          justify-between 
-                          gap-3 md:gap-4 
-                          overflow-x-auto 
-                          flex-nowrap 
-                          whitespace-nowrap 
-                          text-[11px] 
-                          sm:text-sm
-                        "
-          >                                                                                                     {/* Flex container for stats items */}
-            <div className="flex items-center gap-4 md:gap-6">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-slate-500" />
-                <span className="text-sm text-gray-600">
-                  Queue: <strong className="text-gray-800">
-                    {stageCounts.queue}
-                  </strong>
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-3 text-[10px] sm:text-sm min-w-0">                                       {/* Mobile-safe stats grid */}
+            <div className="min-w-0 rounded-2xl bg-white/70 px-2 py-2 sm:px-3 sm:py-2.5 shadow-sm border border-white/60">
+              <div className="flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-slate-500 flex-shrink-0" />
+                <span className="truncate text-center text-gray-600 leading-none">
+                  Queue <strong className="text-gray-800">{stageCounts.queue}</strong>
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" />
-                <span className="text-sm text-gray-600">
-                  Preparing: <strong className="text-gray-800">
-                    {stageCounts.preparing}
-                  </strong>
+            </div>
+            <div className="min-w-0 rounded-2xl bg-white/70 px-2 py-2 sm:px-3 sm:py-2.5 shadow-sm border border-white/60">
+              <div className="flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-orange-500 animate-pulse flex-shrink-0" />
+                <span className="truncate text-center text-gray-600 leading-none">
+                  Prep <strong className="text-gray-800">{stageCounts.preparing}</strong>
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="text-sm text-gray-600">
-                  Ready: <strong className="text-gray-800">
-                    {stageCounts.ready}
-                  </strong>
+            </div>
+            <div className="min-w-0 rounded-2xl bg-white/70 px-2 py-2 sm:px-3 sm:py-2.5 shadow-sm border border-white/60">
+              <div className="flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-500 flex-shrink-0" />
+                <span className="truncate text-center text-gray-600 leading-none">
+                  Ready <strong className="text-gray-800">{stageCounts.ready}</strong>
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500" />
-                <span className="text-sm text-gray-600">
-                  Collected: <strong className="text-gray-800">
-                    {stageCounts.collected}
-                  </strong>
+            </div>
+            <div className="min-w-0 rounded-2xl bg-white/70 px-2 py-2 sm:px-3 sm:py-2.5 shadow-sm border border-white/60">
+              <div className="flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-blue-500 flex-shrink-0" />
+                <span className="truncate text-center text-gray-600 leading-none">
+                  Collected <strong className="text-gray-800">{stageCounts.collected}</strong>
                 </span>
               </div>
             </div>
