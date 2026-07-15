@@ -26,6 +26,12 @@ export interface RegisterInput {
   employeeNumber?: string;
 }
 
+export interface AddEmployeeInput {
+  fullName: string;
+  phoneNumber: string;
+  role: 'owner' | 'manager' | 'supervisor' | 'staff';
+}
+
 type UserMetadata = Record<string, unknown>;
 
 function isString(value: unknown): value is string {
@@ -374,6 +380,69 @@ export function useAuth() {
     }
   }, []);
 
+  const addEmployee = useCallback(async (input: AddEmployeeInput) => {
+    setAuthenticating(true);
+
+    try {
+      setError(null);
+
+      if (!user?.auth_user_id) {
+        throw new Error('You must be signed in to add an employee');
+      }
+
+      if (!user.profile?.store_id) {
+        throw new Error('Select a store before adding an employee');
+      }
+
+      const fullName = input.fullName.trim();
+      const normalizedPhone = normalizePhoneNumber(input.phoneNumber);
+
+      if (!fullName) {
+        throw new Error('Employee name is required');
+      }
+
+      if (!isValidPhoneNumber(normalizedPhone)) {
+        throw new Error('Phone number must be + followed by nine digits');
+      }
+
+      const profilePayload = {
+        auth_user_id: user.auth_user_id,
+        store_id: user.profile.store_id,
+        role: input.role,
+        full_name: fullName,
+        store_name: user.profile.store_name ?? user.profile.shop_name ?? 'Store',
+        store_number: user.profile.store_number ?? user.profile.shop_number ?? 1,
+        store_phone: user.profile.store_phone ?? normalizedPhone,
+        shop_name: user.profile.shop_name ?? user.profile.store_name ?? 'Store',
+        shop_number: user.profile.shop_number ?? user.profile.store_number ?? 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: insertedProfile, error: insertError } = await supabase
+        .from('profile')
+        .insert([profilePayload])
+        .select('*')
+        .single();
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      const refreshedProfiles = await fetchProfiles(user.auth_user_id);
+      const selectedStoreId = buildSelectedStoreId(user.auth_user_id, refreshedProfiles);
+      setUser(buildAuthUser(user as unknown as User, refreshedProfiles, selectedStoreId));
+
+      return { profile: insertedProfile as Profile | null, error: null };
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add employee';
+      setError(errorMessage);
+      return { profile: null, error: errorMessage };
+    } finally {
+      setAuthenticating(false);
+    }
+  }, [fetchProfiles, user]);
+
   const selectStore = useCallback((storeId: string) => {
     setUser((current) => {
       if (!current) {
@@ -407,6 +476,7 @@ export function useAuth() {
     error,
     login,
     register,
+    addEmployee,
     logout,
     selectStore,
     isAuthenticated: !!user,

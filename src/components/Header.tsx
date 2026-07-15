@@ -13,6 +13,7 @@ interface HeaderProps {
   user: AuthUser | null;
   onOpenSearch: () => void;
   onOpenAddOrder: () => void;
+  onOpenAddEmployee: () => void;
   onOpenLogin: () => void;
   onOpenRegister: () => void;
   onOpenDashboard: () => void;
@@ -40,6 +41,7 @@ const Header: React.FC<HeaderProps> = ({
   user,
   onOpenSearch,
   onOpenAddOrder,
+  onOpenAddEmployee,
   onOpenLogin,
   onOpenRegister,
   onOpenDashboard,
@@ -122,7 +124,7 @@ const Header: React.FC<HeaderProps> = ({
                   </button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end" className="min-w-56">
+                <DropdownMenuContent align="end" className="min-w-56 border-yellow-400 ring-1 ring-yellow-400/20">
                   <div className="px-2 py-1.5 text-xs uppercase tracking-[0.24em] text-muted-foreground">
                     {role}
                   </div>
@@ -133,9 +135,9 @@ const Header: React.FC<HeaderProps> = ({
                     </DropdownMenuItem>
                   )}
                   {canAddEmployee && (
-                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenRegister(); }}>
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenAddEmployee(); }}>
                       <Users className="mr-2 h-4 w-4" />
-                      Register
+                      Add Employee
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
@@ -203,15 +205,26 @@ const Header: React.FC<HeaderProps> = ({
                 <DropdownMenuTrigger asChild>
                   <button
                     className="
-                                inline-flex items-center gap-1.5 rounded-2xl bg-slate-700 px-2.5 py-1.5 transition-colors hover:bg-slate-600
+                                inline-flex 
+                                items-center 
+                                gap-1.5 
+                                rounded-2xl 
+                                bg-slate-700 
+                                px-2.5 py-1.5 
+                                transition-colors 
+                                hover:bg-slate-600
                               "
                   >
-                    <span className="whitespace-nowrap text-xs font-semibold tracking-wide">{getInitials(user)}</span>
+                      <span className="whitespace-nowrap text-xs font-semibold tracking-wide">
+                        {getInitials(user)}
+                      </span>
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-56">
-                  <div className="px-2 py-1.5 text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                  
+                </DropdownMenuTrigger>                                                                                            
+                
+                <DropdownMenuContent align="end" className="min-w-56 border-yellow-400 ring-1 ring-yellow-400/20">                                                            {/* Dropdown menu content for mobile view */}
+                  <div className="px-2 py-1.5 text-xs uppercase tracking-[0.24em] text-muted-foreground">                         {/* Display the user's role in the dropdown menu */}
                     {role}
                   </div>
                   {canViewDashboard && (
@@ -221,9 +234,9 @@ const Header: React.FC<HeaderProps> = ({
                     </DropdownMenuItem>
                   )}
                   {canAddEmployee && (
-                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenRegister(); }}>
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenAddEmployee(); }}>
                       <Users className="mr-2 h-4 w-4" />
-                      Register
+                      Add Employee
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />

@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { KanbanBoard } from './KanbanBoard';                                                                                      //-Kanban board component to display orders in stages
 import { AddOrderModal } from './AddOrderModal';
+import { AddEmployeeModal } from './AddEmployeeModal';
 import SearchModal from './SearchModal';
 import { LoginModal } from './LoginModal';
 import { Plus, AlertCircle, RefreshCw, CheckCircle, Store, X } from 'lucide-react';                                                      //-Icons from lucide-react
@@ -78,6 +79,7 @@ export const AppLayout: React.FC = () => {
   const [authModalOpen, setAuthModalOpen] = useState(false);                                                    //-Starts the auth modal as closed and memorises its state
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');                            //-Tracks whether the auth modal is in login or register mode
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);                                                //-Controls visibility of login prompt banner
+  const [addEmployeeModalOpen, setAddEmployeeModalOpen] = useState(false);                                      //-Controls visibility of the add employee modal
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);     //-Controls data passed to toast notifications
   const [pendingOrderStages, setPendingOrderStages] = useState<Partial<Record<string, OrderStage>>>({});        //-Keeps moved cards visible in their dropped stage until remote data catches up
@@ -307,6 +309,10 @@ export const AppLayout: React.FC = () => {
     setAuthModalOpen(true);
   };
 
+  const handleOpenAddEmployee = () => {
+    setAddEmployeeModalOpen(true);
+  };
+
   const handleOpenDashboard = () => {
     navigate('/dashboard');
   };
@@ -362,6 +368,7 @@ export const AppLayout: React.FC = () => {
           user={user}
           onOpenSearch={() => setSearchModalOpen(true)}
           onOpenAddOrder={handleOpenAddOrder}
+          onOpenAddEmployee={handleOpenAddEmployee}
           onOpenLogin={handleOpenLogin}
           onOpenRegister={handleOpenRegister}
           onOpenDashboard={handleOpenDashboard}
@@ -575,6 +582,11 @@ export const AppLayout: React.FC = () => {
         onClose={() => {
           setAuthModalOpen(false);
         }}
+      />
+
+      <AddEmployeeModal
+        isOpen={addEmployeeModalOpen}
+        onClose={() => setAddEmployeeModalOpen(false)}
       />
 
       {needsStoreSelection && (
