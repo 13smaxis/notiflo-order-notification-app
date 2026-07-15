@@ -32,6 +32,25 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const normalizePhoneInput = (value: string) => {
+    const cleaned = value.replace(/[\s\-()]/g, '').trim();
+
+    if (!cleaned) {
+      return '';
+    }
+
+    if (cleaned.startsWith('+27')) {
+      return `0${cleaned.slice(3)}`;
+    }
+
+    if (cleaned.startsWith('27') && cleaned.length === 11) {
+      return `0${cleaned.slice(2)}`;
+    }
+
+    return cleaned;
+  };
+  const isValidLocalPhoneNumber = (value: string) => /^0\d{9}$/.test(normalizePhoneInput(value));
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -62,13 +81,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
     try {
       if (currentMode === 'login') {
-        if (!loginPhoneNumber.trim()) {
+        const normalizedLoginPhone = normalizePhoneInput(loginPhoneNumber);
+
+        if (!normalizedLoginPhone) {
           setError('Phone number is required');
           return;
         }
 
-        if (!/^0\d{9}$/.test(loginPhoneNumber.trim())) {
-          setError('Phone number must be 0 followed by nine digits');
+        if (!isValidLocalPhoneNumber(normalizedLoginPhone)) {
+          setError('Use a local phone number like 0627680710');
           return;
         }
 
@@ -77,7 +98,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           return;
         }
 
-        const { user, error: loginError } = await login(loginPhoneNumber, password);
+        const { user, error: loginError } = await login(normalizedLoginPhone, password);
 
         if (loginError) {
           setError(loginError);
@@ -91,13 +112,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         return;
       }
 
-      if (!registerPhoneNumber.trim()) {
+      const normalizedRegisterPhone = normalizePhoneInput(registerPhoneNumber);
+
+      if (!normalizedRegisterPhone) {
         setError('Phone number is required');
         return;
       }
 
-      if (!/^0\d{9}$/.test(registerPhoneNumber.trim())) {
-        setError('Phone number must be 0 followed by nine digits');
+      if (!isValidLocalPhoneNumber(normalizedRegisterPhone)) {
+        setError('Use a local phone number like 0627680710');
         return;
       }
 
@@ -128,7 +151,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
       const { user, error: registerError } = await register({
         email: registerEmail.trim() || undefined,
-        phoneNumber: registerPhoneNumber,
+        phoneNumber: normalizedRegisterPhone,
         password,
         role,
         storeName: shopName,
@@ -212,30 +235,40 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <input
                 type={isLoginMode ? 'text' : 'email'}
                 value={isLoginMode ? loginPhoneNumber : registerEmail}
-                onChange={(e) => (isLoginMode ? setLoginPhoneNumber(e.target.value) : setRegisterEmail(e.target.value))}
+                onChange={(e) => {
+                  if (isLoginMode) {
+                    setLoginPhoneNumber(normalizePhoneInput(e.target.value));
+                    return;
+                  }
+
+                  setRegisterEmail(e.target.value);
+                }}
                 placeholder={isLoginMode ? '0123456789' : 'you@example.com'}
                 className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl text-gray-900 focus:border-amber-500 focus:ring-0 outline-none transition-colors"
                 autoFocus
               />
             </div>
+            {isLoginMode && (
+              <p className="mt-2 text-xs text-gray-500">Example: 0627680710 or +27 62 768 0710. Spaces, brackets, and hyphens are removed automatically.</p>
+            )}
           </div>
 
           {!isLoginMode && (
             <>
               <div>
-                <Label className="mb-2 block text-sm font-semibold text-gray-700">Phone Number</Label>
+                  <Label className="mb-2 block text-sm font-semibold text-gray-700">Cellphone Number</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <Input
                     type="text"
                     inputMode="tel"
-                    pattern="^0\\d{9}$"
                     value={registerPhoneNumber}
-                    onChange={(event) => setRegisterPhoneNumber(event.target.value)}
+                    onChange={(event) => setRegisterPhoneNumber(normalizePhoneInput(event.target.value))}
                     placeholder="0123456789"
                     className="pl-11"
                   />
                 </div>
+                <p className="mt-2 text-xs text-gray-500">Example: 0627680710 or +27 62 768 0710. Spaces, brackets, and hyphens are removed automatically.</p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

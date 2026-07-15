@@ -495,7 +495,7 @@ export const AppLayout: React.FC = () => {
         </main>
 
         {/* Floating Action Button (Mobile) */}
-        {isMobile && isAuthenticated && orders.length > 0 && (
+        {isMobile && isAuthenticated && (
           <button
             onClick={() => setAddOrderModalOpen(true)}
             className="
