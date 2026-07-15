@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, LayoutDashboard, LogOut, Plus, Search, User, Users } from 'lucide-react';
+import { ChevronDown, LayoutDashboard, LogOut, Plus, Search, Store, User, Users } from 'lucide-react';
 import { AuthUser } from '@/hooks/useAuth';
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ interface HeaderProps {
   onOpenSearch: () => void;
   onOpenAddOrder: () => void;
   onOpenAddEmployee: () => void;
+  onOpenAddStore: () => void;
   onOpenLogin: () => void;
   onOpenRegister: () => void;
   onOpenDashboard: () => void;
@@ -42,6 +43,7 @@ const Header: React.FC<HeaderProps> = ({
   onOpenSearch,
   onOpenAddOrder,
   onOpenAddEmployee,
+  onOpenAddStore,
   onOpenLogin,
   onOpenRegister,
   onOpenDashboard,
@@ -49,6 +51,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const role = user?.profile?.role?.toLowerCase() ?? 'staff';
   const canAddEmployee = role === 'owner' || role === 'manager' || role === 'supervisor';
+  const canAddStore = role === 'owner';
   const canViewDashboard = role === 'owner';
 
   return (
@@ -138,6 +141,12 @@ const Header: React.FC<HeaderProps> = ({
                     <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenAddEmployee(); }}>
                       <Users className="mr-2 h-4 w-4" />
                       Add Employee
+                    </DropdownMenuItem>
+                  )}
+                  {canAddStore && (
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenAddStore(); }}>
+                      <Store className="mr-2 h-4 w-4" />
+                      Add Store
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
@@ -237,6 +246,12 @@ const Header: React.FC<HeaderProps> = ({
                     <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenAddEmployee(); }}>
                       <Users className="mr-2 h-4 w-4" />
                       Add Employee
+                    </DropdownMenuItem>
+                  )}
+                  {canAddStore && (
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenAddStore(); }}>
+                      <Store className="mr-2 h-4 w-4" />
+                      Add Store
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
