@@ -82,6 +82,7 @@ export const AppLayout: React.FC = () => {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);     //-Controls data passed to toast notifications
   const [pendingOrderStages, setPendingOrderStages] = useState<Partial<Record<string, OrderStage>>>({});        //-Keeps moved cards visible in their dropped stage until remote data catches up
   const [pendingCollectedAt, setPendingCollectedAt] = useState<Partial<Record<string, string>>>({});            //-Keeps collected cards visible during the 5 minute window
+  const [statsNow, setStatsNow] = useState(() => Date.now());                                                    //-Tracks the current time so collected stats can roll over at 2AM
 
   //Custom Hooks for Data & Auth
   const { orders, loading, error, addOrder, updateOrderStage, searchOrder, refetch } = useOrders();             //-Custom hook for fetching and updating orders(encaspulates order logic)
@@ -136,6 +137,25 @@ export const AppLayout: React.FC = () => {
 
     setUser(user);
   }, [authLoading, user, setUser]);
+
+  useEffect(() => {
+    const scheduleStatsRefresh = () => {
+      const now = new Date();
+      const nextReset = new Date(now);
+      nextReset.setHours(2, 0, 0, 0);
+
+      if (now >= nextReset) {
+        nextReset.setDate(nextReset.getDate() + 1);
+      }
+
+      return window.setTimeout(() => {
+        setStatsNow(Date.now());
+      }, nextReset.getTime() - now.getTime());
+    };
+
+    const timer = scheduleStatsRefresh();
+    return () => window.clearTimeout(timer);
+  }, [statsNow]);
 
   const availableStores = user?.availableStores ?? [];
   const needsStoreSelection = isAuthenticated && availableStores.length > 1 && !user?.selectedStoreId;
@@ -296,11 +316,29 @@ export const AppLayout: React.FC = () => {
    * Counts number of orders in each stage for quick stats bar
    * Used to display the number of orders in each stage at the top of the layout
    */
+  const getCollectedStatsCutoff = (referenceTime: number) => {
+    const cutoff = new Date(referenceTime);
+    cutoff.setHours(2, 0, 0, 0);
+
+    if (referenceTime < cutoff.getTime()) {
+      cutoff.setDate(cutoff.getDate() - 1);
+    }
+
+    return cutoff.getTime();
+  };
+
+  const collectedStatsCutoff = getCollectedStatsCutoff(statsNow);
   const stageCounts = {
     queue: displayOrders.filter(o => o.stage === 'queue').length,
     preparing: displayOrders.filter(o => o.stage === 'preparing').length,
     ready: displayOrders.filter(o => o.stage === 'ready').length,
-    collected: displayOrders.filter(o => o.stage === 'collected').length,
+    collected: displayOrders.filter((order) => {
+      if (order.stage !== 'collected' || !order.collected_at) {
+        return false;
+      }
+
+      return new Date(order.collected_at).getTime() >= collectedStatsCutoff;
+    }).length,
   };
 
   return (
@@ -494,7 +532,6 @@ export const AppLayout: React.FC = () => {
           )}
         </main>
 
-        {/* Floating Action Button (Mobile) */}
         {isMobile && isAuthenticated && (
           <button
             onClick={() => setAddOrderModalOpen(true)}

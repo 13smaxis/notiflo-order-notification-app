@@ -86,6 +86,18 @@ const Header: React.FC<HeaderProps> = ({
               <Search className="w-5 h-5" />
             </button>
 
+            {user && (
+              <button
+                onClick={onOpenAddOrder}
+                className="
+                            inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 font-semibold text-slate-900 transition-colors hover:bg-slate-100
+                          "
+              >
+                <Plus className="w-5 h-5" />
+                <span className="whitespace-nowrap">Create Order</span>
+              </button>
+            )}
+
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -175,15 +187,15 @@ const Header: React.FC<HeaderProps> = ({
           <div className="
                             flex flex-nowrap 
                             items-center 
-                            gap-2 
+                            gap-1.5 
                             min-w-0 
                             md:hidden
                           ">
             <button
               onClick={onOpenSearch}
-              className="px-3 transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-2xl transition-colors"
             >
-              <Search className="w-5 h-5" />
+              <Search className="h-4 w-4" />
             </button>
 
             {user ? (
@@ -191,11 +203,11 @@ const Header: React.FC<HeaderProps> = ({
                 <DropdownMenuTrigger asChild>
                   <button
                     className="
-                                flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-700 hover:bg-slate-600 transition-colors
+                                inline-flex items-center gap-1.5 rounded-2xl bg-slate-700 px-2.5 py-1.5 transition-colors hover:bg-slate-600
                               "
                   >
-                    <span className="text-sm font-semibold tracking-wide">{getInitials(user)}</span>
-                    <ChevronDown className="w-4 h-4" />
+                    <span className="whitespace-nowrap text-xs font-semibold tracking-wide">{getInitials(user)}</span>
+                    <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-56">
@@ -226,61 +238,38 @@ const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={onOpenLogin}
                   className="
-                              flex items-center 
-                              gap-2 
-                              px-3 py-2 
+                              inline-flex items-center 
+                              gap-1.5 
+                              px-2.5 py-1.5 
                               rounded-2xl 
                               bg-slate-700 
                               hover:bg-slate-600 
                               transition-colors
                             "
                 >
-                  <User className="w-5 h-5" />
-                  <span className="text-sm font-medium">Sign In</span>
+                  <User className="h-4 w-4" />
+                  <span className="whitespace-nowrap text-xs font-medium">Sign In</span>
                 </button>
                 <button
                   onClick={() => onOpenRegister()}
                   className="
-                              flex items-center 
-                              gap-2 
-                              px-3 py-2 
+                              inline-flex items-center 
+                              gap-1.5 
+                              px-2.5 py-1.5 
                               rounded-2xl 
                               border border-white/30 
                               hover:bg-white/10 
                               transition-colors
                             "
                 >
-                  <User className="w-5 h-5" />
-                  <span className="text-sm font-medium">Register</span>
+                  <User className="h-4 w-4" />
+                  <span className="whitespace-nowrap text-xs font-medium">Register</span>
                 </button>
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {user && (
-        <button
-          onClick={onOpenAddOrder}
-          className="
-                      hidden md:flex 
-                      fixed bottom-6 right-6 
-                      z-50 
-                      h-16 w-16 
-                      items-center justify-center 
-                      rounded-full 
-                      bg-gradient-to-r from-amber-500 to-orange-500 
-                      text-slate-900 
-                      shadow-2xl 
-                      transition 
-                      hover:from-amber-600 hover:to-orange-600 
-                      focus:outline-none focus:ring-2 focus:ring-amber-400
-                    "
-          title="Add Order"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-      )}
     </header>
   );
 };
