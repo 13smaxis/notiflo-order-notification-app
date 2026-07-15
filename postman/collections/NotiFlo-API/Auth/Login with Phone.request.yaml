@@ -1,0 +1,18 @@
+$kind: http-request
+name: Login with Phone
+url: http://localhost:3000/api/auth/login-with-phone
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"phoneNumber\": \"0627680710\",\r
+
+    \  \"password\": \"test1234\"\r
+
+    }"
+scripts:
+  - type: beforeRequest
+    code: ""
+    language: text/javascript
+order: 2634259503251455

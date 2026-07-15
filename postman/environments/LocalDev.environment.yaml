@@ -1,0 +1,9 @@
+name: LocalDev
+values:
+  - key: baseUrl
+    value: ''
+  - key: supabaseUrl
+    value: ''
+  - key: auth_password
+    value: ''
+color: 0

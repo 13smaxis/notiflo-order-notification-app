@@ -1,0 +1,17 @@
+$kind: http-request
+name: Logout
+method: POST
+url: '{{supabaseUrl}}/auth/v1/logout'
+description: |-
+  Sign out the currently authenticated user via Supabase Auth.
+  Requires a valid Bearer token in the Authorization header.
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{authToken}}'
+headers:
+  - key: apikey
+    value: '{{supabaseAnonKey}}'
+  - key: Content-Type
+    value: application/json

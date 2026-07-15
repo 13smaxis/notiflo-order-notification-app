@@ -1,0 +1,24 @@
+$kind: http-request
+name: Add Store
+method: POST
+url: "{{baseUrl}}/api/add-store"
+description: |-
+  Adds a new store to the authenticated user's account.
+  Requires a valid Supabase JWT Bearer token in the Authorization header.
+  Calls the Supabase RPC function `add_store_to_user`.
+auth:
+  type: bearer
+  credentials:
+    token: "{{authToken}}"
+headers:
+  Content-Type: application/json
+  Authorization: Bearer eyJhbGciOiJFUzI1NiIsImtpZCI6IjE5ZTUxOTQxLTk5ODctNDAxNS05MGQ4LTQyOTdlZDM0ZTFjZiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3R6dGtjbHhmdGJ6ZGN1aWR2dGFnLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTZkYTVjNS02MzRlLTQxYWUtOWQxNy0yY2Y5MTRmOGJjNmYiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg0MTM0ODUyLCJpYXQiOjE3ODQxMzEyNTIsImVtYWlsIjoiMDYyNzY4MDcxMEBwaG9uZS5ub3RpZmxvLmxvY2FsIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJjb250YWN0X2VtYWlsIjoidGVzdEB1c2VyLmNvLnphIiwiZW1haWwiOiIwNjI3NjgwNzEwQHBob25lLm5vdGlmbG8ubG9jYWwiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZW1wbG95ZWVfbnVtYmVyIjoiRTQ4MjEzIiwiZnVsbF9uYW1lIjoiU21pdGggTWJlbGUiLCJvd25lcl9uYW1lIjoiU21pdGgiLCJvd25lcl9zdXJuYW1lIjoiTWJlbGUiLCJwaG9uZV9udW1iZXIiOiIwNjI3NjgwNzEwIiwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoib3duZXIiLCJzdG9yZV9uYW1lIjoiVGVzdCBTdG9yZSAxIiwic3RvcmVfbnVtYmVyIjoxLCJzdG9yZV9waG9uZSI6IjA2Mjc2ODA3MTAiLCJzdWIiOiIyMTZkYTVjNS02MzRlLTQxYWUtOWQxNy0yY2Y5MTRmOGJjNmYifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc4NDEzMTI1Mn1dLCJzZXNzaW9uX2lkIjoiZmViYzI5ZjYtZjM3Mi00MTA3LWI3NGQtMjM2YWRlNzhjMTFiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.vvdbpcFHvau-Ltf_YCbH7fYwbqwx-ir3bJK51GWrKTvmiRP8fVW2taiD72Pt1XeER4yz6AZ57PQR0E6GRVsmaQ
+body:
+  type: json
+  content: |-
+    {
+      "storeNumber": "2",
+      "storeName": "Test Store 1.1",
+      "storePhone": "0627680710",
+      "role": "owner"
+    }

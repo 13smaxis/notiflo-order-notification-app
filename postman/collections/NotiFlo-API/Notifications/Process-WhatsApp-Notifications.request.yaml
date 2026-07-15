@@ -1,0 +1,9 @@
+$kind: http-request
+name: Process WhatsApp Notifications
+method: POST
+url: '{{baseUrl}}/notifications/process-whatsapp'
+description: |-
+  Manually triggers processing of all pending WhatsApp notifications.
+  Fetches up to 50 pending WhatsApp notifications, sends them via Twilio,
+  and creates SMS fallback notifications for any that fail.
+  Note: This also runs automatically every 30 seconds via the background poller.

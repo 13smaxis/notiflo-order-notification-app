@@ -1,0 +1,7 @@
+$kind: http-request
+name: Get Server Health
+method: GET
+url: '{{baseUrl}}/health'
+description: |-
+  Health check endpoint to verify server and Supabase connection status.
+  Returns server status, Supabase connection status, and a timestamp.

@@ -1,0 +1,7 @@
+$kind: http-request
+name: Get Pending Notifications
+method: GET
+url: '{{baseUrl}}/notifications/pending'
+description: |-
+  Fetches up to 10 pending notifications (both WhatsApp and SMS) from the database,
+  ordered by creation date ascending (oldest first).

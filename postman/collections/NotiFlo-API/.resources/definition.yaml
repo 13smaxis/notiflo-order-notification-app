@@ -1,0 +1,17 @@
+$kind: collection
+name: NotiFlo API
+description: |-
+  API collection for the NotiFlo Order Notification App.
+  Covers the Express backend (health, notifications, stores) and Supabase Auth endpoints.
+  
+  Base URL for backend: {{baseUrl}} (default: http://localhost:3000)
+  Supabase URL: {{supabaseUrl}}
+variables:
+  - key: baseUrl
+    value: 'http://localhost:3000'
+  - key: supabaseUrl
+    value: 'https://tztkclxftbzdcuidvtag.supabase.co'
+  - key: supabaseAnonKey
+    value: 'sb_publishable_jxS9BcFKgHbSUCOEM06BAQ_JrZ4Y06vb'
+  - key: authToken
+    value: ''

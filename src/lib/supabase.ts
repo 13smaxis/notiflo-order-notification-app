@@ -14,9 +14,10 @@ const meta = import.meta as ImportMeta & {
 };
 
 const supabaseUrl = meta.env?.VITE_SUPABASE_URL || 'https://tztkclxftbzdcuidvtag.supabase.co';
-const supabaseKey = meta.env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_gHWvFjJO1w6IVhmGWpn90A_8wECybXb';
+const supabaseKey = meta.env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_jxS9BcFKgHbSUCOEM06BAQ_JrZ4Y06v';
 
-if (!supabaseUrl || !supabaseKey) {
+if (!supabaseUrl || !supabaseKey) 
+{
   throw new Error('Missing Supabase credentials in environment variables');
 }
 

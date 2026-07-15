@@ -1,0 +1,35 @@
+$kind: http-request
+name: Register
+method: POST
+url: '{{supabaseUrl}}/auth/v1/signup'
+description: |-
+  Register a new user via Supabase Auth.
+  The app uses phone-based auth: the email is derived from the phone number
+  in the format `{phoneNumber}@phone.notiflo.local`.
+  
+  User metadata includes store details (role, store name, store number, etc.)
+  which are used to create the user's profile and store on the backend.
+headers:
+  - key: apikey
+    value: '{{supabaseAnonKey}}'
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "0627680710@phone.notiflo.local",
+      "password": "yourpassword",
+      "data": {
+        "role": "owner",
+        "full_name": "John Doe",
+        "store_name": "My Store",
+        "store_number": 1,
+        "store_phone": "0627680710",
+        "owner_name": "John",
+        "owner_surname": "Doe",
+        "contact_email": "john@example.com",
+        "phone_number": "0627680710",
+        "employee_number": ""
+      }
+    }

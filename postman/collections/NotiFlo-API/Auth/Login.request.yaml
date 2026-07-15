@@ -1,0 +1,22 @@
+$kind: http-request
+name: Login
+method: POST
+url: "{{supabaseUrl}}/auth/v1/token"
+description: |-
+  Sign in an existing user via Supabase Auth.
+  The app uses phone-based auth: the email is derived from the phone number
+  in the format `{phoneNumber}@phone.notiflo.local`.
+
+  On success, the response contains an `access_token` which should be stored
+  in the `authToken` collection variable for use with authenticated endpoints.
+headers:
+  apikey: "{{supabaseAnonKey}}"
+  Content-Type: application/json
+body:
+  type: json
+  content: |2-
+      {
+        "email": "0619962996@phone.notiflo.local",
+        "password": "test1234",
+        "grant_type": "password"
+      }

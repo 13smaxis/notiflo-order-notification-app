@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/lib/supabase';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -74,7 +75,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setOfficeUseEmployeeNumber('');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    /*const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
@@ -149,6 +150,44 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         return;
       }
 
+      try {
+        const { data: existingSession, error: loginError } = await supabase.auth.signInWithPassword({
+          email: registerEmail || `${normalizedRegisterPhone}@phone.notiflo.local`,
+          password,
+        });
+
+        if (existingSession?.session && !loginError)                                                                              //- Check if the user already exists and can log in with the provided credentials
+        {
+          const response = await fetch('/api/add-store', {
+            method: 'POST',
+            headers:
+            {
+              'Authorization': `Bearer ${existingSession.session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              storeNumber,
+              storeName: shopName,
+              storePhone: normalizedRegisterPhone,
+              role,
+            }),
+          });                                                                                                                     //- Call the add-store API route to add the store for the existing user
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            setError(result.error || 'Failed to add store');
+            return;
+          }
+
+          resetForm();
+          onClose();
+          return;
+        }
+      } catch (loginError) {
+        console.error('Error checking existing user:', loginError);
+      }                                                                                                                           //- Continue to registration if login fails
+
       const { user, error: registerError } = await register({
         email: registerEmail.trim() || undefined,
         phoneNumber: normalizedRegisterPhone,
@@ -162,6 +201,158 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       });
 
       if (registerError) {
+        setError(registerError);
+        return;
+      }
+
+      if (user) {
+        resetForm();
+        onClose();
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };*/
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      if (currentMode === 'login') {
+        const normalizedLoginPhone = normalizePhoneInput(loginPhoneNumber);
+
+        if (!normalizedLoginPhone) {
+          setError('Phone number is required');
+          return;
+        }
+
+        if (!isValidLocalPhoneNumber(normalizedLoginPhone)) {
+          setError('Use a local phone number like 0627680710');
+          return;
+        }
+
+        if (!password) {
+          setError('Password is required');
+          return;
+        }
+
+        const { user, error: loginError } = await login(normalizedLoginPhone, password);
+
+        if (loginError) {
+          setError(loginError);
+          return;
+        }
+
+        if (user) {
+          resetForm();
+          onClose();
+        }
+        return;
+      }
+
+      // REGISTER MODE
+      const normalizedRegisterPhone = normalizePhoneInput(registerPhoneNumber);
+
+      if (!normalizedRegisterPhone) {
+        setError('Phone number is required');
+        return;
+      }
+
+      if (!isValidLocalPhoneNumber(normalizedRegisterPhone)) {
+        setError('Use a local phone number like 0627680710');
+        return;
+      }
+
+      if (!password) {
+        setError('Password is required');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+
+      if (!shopName.trim()) {
+        setError('Shop name is required');
+        return;
+      }
+
+      if (!/^[1-9]\d*$/.test(storeNumber.trim())) {
+        setError('Store number must be a positive integer');
+        return;
+      }
+
+      if (!ownerName.trim() || !ownerSurname.trim()) {
+        setError('Owner name and surname are required');
+        return;
+      }
+
+      // Try normal signup first
+      const { user, error: registerError } = await register({
+        email: registerEmail.trim() || undefined,
+        phoneNumber: normalizedRegisterPhone,
+        password,
+        role,
+        storeName: shopName,
+        storeNumber,
+        ownerName,
+        ownerSurname,
+        employeeNumber: officeUseEmployeeNumber.trim() || undefined,
+      });
+
+      if (registerError) {
+        // Check if user already exists
+        if (registerError.includes('already') || registerError.includes('exists')) {
+          // User exists - try to add store instead
+          try {
+            // Login first to get token
+            const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+              email: registerEmail.trim() || `${normalizedRegisterPhone}@phone.notiflo.local`,
+              password,
+            });
+
+            if (loginError || !loginData?.session) {
+              setError('Phone/email or password is incorrect');
+              return;
+            }
+
+            // Call backend add-store endpoint
+            const addStoreResponse = await fetch('/api/add-store', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${loginData.session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                storeNumber: storeNumber.trim(),
+                storeName: shopName.trim(),
+                storePhone: normalizedRegisterPhone,
+                role,
+              }),
+            });
+
+            const addStoreResult = await addStoreResponse.json();
+
+            if (!addStoreResponse.ok) {
+              setError(addStoreResult.error || 'Failed to add store');
+              return;
+            }
+
+            // Success! Store added
+            resetForm();
+            onClose();
+            return;
+          } catch (addStoreError) {
+            console.error('Add store error:', addStoreError);
+            setError('Failed to add store to existing account');
+            return;
+          }
+        }
+
+        // Other registration errors
         setError(registerError);
         return;
       }
@@ -198,40 +389,60 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <X className="w-6 h-6" />
         </button>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">                                                                  {/* Form for both login and registration */}
           <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
             <button
               type="button"
               onClick={() => setCurrentMode('login')}
-              className={`rounded-xl px-4 py-2 font-semibold transition-colors border ${isLoginMode ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-white/70 text-slate-600 border-slate-200'}`}
-            >
+              className={`
+                          rounded-xl 
+                          px-4 py-2 
+                          font-semibold 
+                          transition-colors 
+                          border 
+                          ${isLoginMode ?
+                  'bg-amber-600 text-white border-amber-600 shadow-sm' :
+                  'bg-white/70 text-slate-600 border-slate-200'}
+                        `}
+            >                                                                                                                     {/* Toggle button for login mode */}
               Sign In
             </button>
             <button
               type="button"
               onClick={() => setCurrentMode('register')}
-              className={`rounded-xl px-4 py-2 font-semibold transition-colors border ${!isLoginMode ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-white/70 text-slate-600 border-slate-200'}`}
-            >
+              className={`
+                          rounded-xl 
+                          px-4 py-2 
+                          font-semibold 
+                          transition-colors 
+                          border 
+                          ${!isLoginMode ?
+                  'bg-amber-600 text-white border-amber-600 shadow-sm' :
+                  'bg-white/70 text-slate-600 border-slate-200'}
+                        `}
+            >                                                                                                                     {/* Toggle button for registration mode */}
               Register
             </button>
           </div>
 
           {displayError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {displayError}
+              {displayError}                                                                                                      {/* Calls the error message from the authentication hook or local state */}
             </div>
-          )}
+          )}                                                                                                                      {/* Display error message if any */}
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">                                                    {/* Label for the input field */}
               {isLoginMode ? 'Phone Number' : 'Email Address (optional)'}
             </label>
-            <div className="relative">
+
+            <div className="relative">                                                                                            {/* Container for the input field and icon */}
               {isLoginMode ? (
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               ) : (
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               )}
+
               <input
                 type={isLoginMode ? 'text' : 'email'}
                 value={isLoginMode ? loginPhoneNumber : registerEmail}
@@ -244,7 +455,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   setRegisterEmail(e.target.value);
                 }}
                 placeholder={isLoginMode ? '0123456789' : 'you@example.com'}
-                className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl text-gray-900 focus:border-amber-500 focus:ring-0 outline-none transition-colors"
+                className="
+                            w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl text-gray-900 focus:border-amber-500 focus:ring-0 outline-none transition-colors"
                 autoFocus
               />
             </div>
@@ -256,7 +468,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           {!isLoginMode && (
             <>
               <div>
-                  <Label className="mb-2 block text-sm font-semibold text-gray-700">Cellphone Number</Label>
+                <Label className="mb-2 block text-sm font-semibold text-gray-700">Cellphone Number</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <Input

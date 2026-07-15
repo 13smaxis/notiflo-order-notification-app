@@ -1,0 +1,9 @@
+$kind: http-request
+name: Process SMS Notifications
+method: POST
+url: '{{baseUrl}}/notifications/process-sms'
+description: |-
+  Manually triggers processing of all pending SMS notifications.
+  Fetches up to 10 pending SMS notifications and sends them via Twilio.
+  Phone numbers are automatically converted from SA format (0XXXXXXXXX) to international (+27XXXXXXXXX).
+  Note: This also runs automatically every 30 seconds via the background poller.
