@@ -18,7 +18,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   mode = 'login',
 }) => {
   const { login, register, authenticating, error: authError } = useAuth();
-  const [currentMode, setCurrentMode] = useState<'login' | 'register'>(mode);
+  const [currentMode, setCurrentMode] = useState<'login' | 'register'>(mode);                                                     //- State to track the current mode of the modal (login or register)
   const [loginPhoneNumber, setLoginPhoneNumber] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPhoneNumber, setRegisterPhoneNumber] = useState('');
@@ -75,222 +75,106 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setOfficeUseEmployeeNumber('');
   };
 
-    /*const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
 
-    try {
-      if (currentMode === 'login') {
-        const normalizedLoginPhone = normalizePhoneInput(loginPhoneNumber);
-
-        if (!normalizedLoginPhone) {
-          setError('Phone number is required');
-          return;
-        }
-
-        if (!isValidLocalPhoneNumber(normalizedLoginPhone)) {
-          setError('Use a local phone number like 0627680710');
-          return;
-        }
-
-        if (!password) {
-          setError('Password is required');
-          return;
-        }
-
-        const { user, error: loginError } = await login(normalizedLoginPhone, password);
-
-        if (loginError) {
-          setError(loginError);
-          return;
-        }
-
-        if (user) {
-          resetForm();
-          onClose();
-        }
-        return;
-      }
-
-      const normalizedRegisterPhone = normalizePhoneInput(registerPhoneNumber);
-
-      if (!normalizedRegisterPhone) {
-        setError('Phone number is required');
-        return;
-      }
-
-      if (!isValidLocalPhoneNumber(normalizedRegisterPhone)) {
-        setError('Use a local phone number like 0627680710');
-        return;
-      }
-
-      if (!password) {
-        setError('Password is required');
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        setError('Passwords do not match');
-        return;
-      }
-
-      if (!shopName.trim()) {
-        setError('Shop name is required');
-        return;
-      }
-
-      if (!/^[1-9]\d*$/.test(storeNumber.trim())) {
-        setError('Store number must be a positive integer');
-        return;
-      }
-
-      if (!ownerName.trim() || !ownerSurname.trim()) {
-        setError('Owner name and surname are required');
-        return;
-      }
-
-      try {
-        const { data: existingSession, error: loginError } = await supabase.auth.signInWithPassword({
-          email: registerEmail || `${normalizedRegisterPhone}@phone.notiflo.local`,
-          password,
-        });
-
-        if (existingSession?.session && !loginError)                                                                              //- Check if the user already exists and can log in with the provided credentials
-        {
-          const response = await fetch('/api/add-store', {
-            method: 'POST',
-            headers:
-            {
-              'Authorization': `Bearer ${existingSession.session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              storeNumber,
-              storeName: shopName,
-              storePhone: normalizedRegisterPhone,
-              role,
-            }),
-          });                                                                                                                     //- Call the add-store API route to add the store for the existing user
-
-          const result = await response.json();
-
-          if (!response.ok) {
-            setError(result.error || 'Failed to add store');
-            return;
-          }
-
-          resetForm();
-          onClose();
-          return;
-        }
-      } catch (loginError) {
-        console.error('Error checking existing user:', loginError);
-      }                                                                                                                           //- Continue to registration if login fails
-
-      const { user, error: registerError } = await register({
-        email: registerEmail.trim() || undefined,
-        phoneNumber: normalizedRegisterPhone,
-        password,
-        role,
-        storeName: shopName,
-        storeNumber,
-        ownerName,
-        ownerSurname,
-        employeeNumber: officeUseEmployeeNumber.trim() || undefined,
-      });
-
-      if (registerError) {
-        setError(registerError);
-        return;
-      }
-
-      if (user) {
-        resetForm();
-        onClose();
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };*/
-
+  /*
+   * Handle form submission for both login and registration modes. 
+   * Validates input fields and calls the appropriate authentication functions.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
+    e.preventDefault();                                                                                                           //- Prevent the default form submission behavior
+    setError(null);                                                                                                               //- Clear any existing error messages
+    setSubmitting(true);                                                                                                          //- Set the submitting state to true to indicate that the form is being processed
 
     try {
-      if (currentMode === 'login') {
-        const normalizedLoginPhone = normalizePhoneInput(loginPhoneNumber);
+      if (currentMode === 'login')                                                                                                //- (1) Check if the current mode is login
+      {
+        const normalizedLoginPhone = normalizePhoneInput(loginPhoneNumber);                                                       
 
-        if (!normalizedLoginPhone) {
+        if (!normalizedLoginPhone)                                                                                                //- Check if the normalized phone number is empty
+        {
           setError('Phone number is required');
           return;
         }
 
-        if (!isValidLocalPhoneNumber(normalizedLoginPhone)) {
-          setError('Use a local phone number like 0627680710');
+        if (!isValidLocalPhoneNumber(normalizedLoginPhone))                                                                       //- Check if the normalized phone number is not a valid SA phone number
+        {
+          setError('Use a South African phone number like 0XXXXXXXXX');
           return;
         }
 
-        if (!password) {
+        if (!password)                                                                                                            //- Check if the password field is empty
+        {
           setError('Password is required');
           return;
         }
 
-        const { user, error: loginError } = await login(normalizedLoginPhone, password);
+        const { user, error: loginError } = await login(normalizedLoginPhone, password);                                          //- Call the login function with the normalized phone number and password
 
-        if (loginError) {
+        if (loginError)                                                                                                           //- Check if there was an error during login
+        {
           setError(loginError);
           return;
         }
 
-        if (user) {
-          resetForm();
-          onClose();
+        if (user)                                                                                                                 //- Check if the user object is returned after successful login
+        {
+          resetForm();                                                                                                            //- Reset the form fields to their initial state
+          onClose();                                                                                                              //- Close the modal after successful login
         }
         return;
       }
 
-      // REGISTER MODE
-      const normalizedRegisterPhone = normalizePhoneInput(registerPhoneNumber);
 
-      if (!normalizedRegisterPhone) {
+      const normalizedRegisterPhone = normalizePhoneInput(registerPhoneNumber);                                                   //- Normalize the phone number input for registration
+
+      if (!normalizedRegisterPhone)                                                                                               //- Check if the normalized phone number is empty
+      {
         setError('Phone number is required');
         return;
       }
 
-      if (!isValidLocalPhoneNumber(normalizedRegisterPhone)) {
-        setError('Use a local phone number like 0627680710');
+      if (!isValidLocalPhoneNumber(normalizedRegisterPhone))                                                                      //- Check if the normalized phone number is not a valid SA phone number
+      {
+        setError('Use a South African phone number like 0XXXXXXXXX');
         return;
       }
 
-      if (!password) {
+      if (!password)                                                                                                              //- Check if the password field is empty
+      {
         setError('Password is required');
         return;
       }
 
-      if (password !== confirmPassword) {
+      if (password !== confirmPassword)                                                                                           //- Check if the password and confirm password fields do not match
+      {
         setError('Passwords do not match');
         return;
       }
 
-      if (!shopName.trim()) {
+      if (!shopName.trim())                                                                                                       //- Check if the shop name field is empty or contains only whitespace
+      {
         setError('Shop name is required');
         return;
       }
 
-      if (!/^[1-9]\d*$/.test(storeNumber.trim())) {
+      if (!/^[1-9]\d*$/.test(storeNumber.trim()))                                                                                 //- Check if the store number is not a negative integer
+      {
         setError('Store number must be a positive integer');
         return;
       }
 
-      if (!ownerName.trim() || !ownerSurname.trim()) {
+      if (!ownerName.trim() || !ownerSurname.trim())                                                                              //- Check if the owner name or surname fields are empty or contain only whitespace
+      {
         setError('Owner name and surname are required');
         return;
       }
 
-      // Try normal signup first
+
+      /*
+       * Try to register first
+       * Call the register function with the provided registration details.
+       * If the user already exists, attempt to log in and add the store instead.
+       */
       const { user, error: registerError } = await register({
         email: registerEmail.trim() || undefined,
         phoneNumber: normalizedRegisterPhone,
@@ -303,12 +187,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         employeeNumber: officeUseEmployeeNumber.trim() || undefined,
       });
 
-      if (registerError) {
-        // Check if user already exists
-        if (registerError.includes('already') || registerError.includes('exists')) {
-          // User exists - try to add store instead
-          try {
-            // Login first to get token
+      if (registerError)                                                                                                          //- Check if there was an error during registration
+      {
+        if (registerError.includes('already') || registerError.includes('exists'))                                                //- Check if the error message indicates that the user already exists
+        {
+          try {                                                                                                                   //- If is, attempt to log in and add the store for existing users
             const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
               email: registerEmail.trim() || `${normalizedRegisterPhone}@phone.notiflo.local`,
               password,

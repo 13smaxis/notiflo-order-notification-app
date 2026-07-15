@@ -20,12 +20,21 @@
 */
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors'
 import { createClient } from '@supabase/supabase-js';
 import { processPendingWhatsAppNotifications } from './services/whatsapp.js';
 import { processPendingSMSNotifications } from './services/sms.js';
 
 dotenv.config();                                                                                                                  //- Load environment variables
 const app = express();                                                                                                            //- Initialize Express
+
+app.use(cors({
+  origin: 'http://localhost:8080',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(express.json());                                                                                                          //- Middleware to parse JSON request bodies
 
 const supabaseAdmin = createClient(
@@ -363,6 +372,10 @@ app.post('/api/auth/register', async (req, res) => {
  * Body: { storeNumber, storeName, storePhone, role? }
  */
 app.post('/api/add-store', verifyAuth, async (req, res) => {
+ console.log('🔍 /api/add-store called');
+ console.log('🔍 User:', req.user?.id);
+ console.log('🔍 Body:', req.body);
+
     try {
         const { storeNumber, storeName, storePhone, role } = req.body;
 
