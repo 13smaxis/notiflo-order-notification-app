@@ -1,5 +1,3 @@
-// services/auth.js
-// Multi-step login service: phone lookup → store selection → password verification
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -29,10 +27,17 @@ export const lookupPhoneNumber = async (phone) => {
     // Step 1: Search for user by phone in auth metadata
     console.log(`🔍 Looking up phone: ${normalizedPhone}`);
 
-    const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    const { data, error: listError } = await supabaseAdmin.auth.admin.listUsers();
 
     if (listError) {
       throw new Error(`Auth lookup failed: ${listError.message}`);
+    }
+
+    // listUsers returns { users: [...] }
+    const users = data?.users || [];
+
+    if (!Array.isArray(users)) {
+      throw new Error('Invalid users response from auth');
     }
 
     // Find user(s) with matching phone
@@ -74,7 +79,9 @@ export const lookupPhoneNumber = async (phone) => {
       };
     }
 
+    console.log('🔍 Raw profiles:', JSON.stringify(profiles, null, 2));
     console.log(`✅ Found user ${matchingUser.id} with ${profiles.length} store(s)`);
+
 
     return {
       found: true,
