@@ -13,6 +13,7 @@ import { AddEmployeeModal } from './AddEmployeeModal';
 import { AddStoreModal } from './AddStoreModal';
 import SearchModal from './SearchModal';
 import { LoginModal } from './LoginModal';
+import { RegisterModal } from './RegisterModal';
 import { Plus, AlertCircle, RefreshCw, CheckCircle, Store, X } from 'lucide-react';                                                      //-Icons from lucide-react
 
 /**
@@ -584,8 +585,14 @@ export const AppLayout: React.FC = () => {
       />
 
       <LoginModal
-        isOpen={authModalOpen}
-        mode={authModalMode}
+        isOpen={authModalOpen && authModalMode === 'login'}
+        onClose={() => {
+          setAuthModalOpen(false);
+        }}
+      />
+
+      <RegisterModal
+        isOpen={authModalOpen && authModalMode === 'register'}
         onClose={() => {
           setAuthModalOpen(false);
         }}

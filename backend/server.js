@@ -24,6 +24,7 @@ import cors from 'cors'
 import { createClient } from '@supabase/supabase-js';
 import { processPendingWhatsAppNotifications } from './services/whatsapp.js';
 import { processPendingSMSNotifications } from './services/sms.js';
+import { lookupPhoneNumber, verifyPassword, selectStore } from './services/auth.js';
 
 dotenv.config();                                                                                                                  //- Load environment variables
 const app = express();                                                                                                            //- Initialize Express
@@ -258,6 +259,7 @@ app.post('/notifications/process-sms', async (req, res) => {
     }
 });
 
+
 /*
  * PHONE + PASSWORD LOGIN ENDPOINT
  * POST /api/auth/login-with-phone
@@ -308,6 +310,7 @@ app.post('/api/auth/login-with-phone', async (req, res) => {
         });
     }
 });
+
 
 /*
  * REGISTER ENDPOINT
@@ -364,6 +367,7 @@ app.post('/api/auth/register', async (req, res) => {
         });
     }
 });
+
 
 /*
  * ADD STORE ENDPOINT
@@ -424,6 +428,106 @@ app.post('/api/add-store', verifyAuth, async (req, res) => {
             details: err.message
         });
     }
+});
+
+
+/*
+ * STEP 1: Look up phone number and return available stores
+ * POST /api/auth/lookup-phone
+ * Body: { phoneNumber: "0627680710" }
+ * Response: { found: true, userId: "xxx", stores: [...] }
+ */
+app.post('/api/auth/lookup-phone', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+ 
+    if (!phoneNumber) {
+      return res.status(400).json({
+        error: 'Phone number is required',
+      });
+    }
+ 
+    console.log(`📱 /api/auth/lookup-phone called with: ${phoneNumber}`);
+ 
+    const result = await lookupPhoneNumber(phoneNumber);
+ 
+    if (!result.found) {
+      return res.status(404).json({
+        found: false,
+        error: result.message,
+      });
+    }
+ 
+    res.json({
+      found: true,
+      userId: result.userId,
+      phone: result.phone,
+      stores: result.stores,
+    });
+  } catch (error) {
+    console.error('❌ Phone lookup endpoint error:', error.message);
+    res.status(500).json({
+      error: 'Phone lookup failed',
+      details: error.message,
+    });
+  }
+});
+
+
+/*
+ * STEP 2: Verify password and return session
+ * POST /api/auth/login
+ * Body: { phoneNumber: "0627680710", storeId: "xxx", password: "pass" }
+ * Response: { success: true, user: {...}, session: {...}, profile: {...} }
+ */
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { phoneNumber, storeId, password } = req.body;
+ 
+    if (!phoneNumber || !storeId || !password) {
+      return res.status(400).json({
+        error: 'Phone number, store ID, and password are required',
+      });
+    }
+ 
+    console.log(`🔐 /api/auth/login called for phone: ${phoneNumber}`);
+ 
+    // Step 1: Verify password
+    const passwordResult = await verifyPassword(phoneNumber, password);
+ 
+    if (!passwordResult.success) {
+      return res.status(401).json({
+        success: false,
+        error: passwordResult.error,
+      });
+    }
+ 
+    // Step 2: Select store
+    const storeResult = await selectStore(passwordResult.user.id, storeId);
+ 
+    if (!storeResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Store selection failed',
+      });
+    }
+ 
+    console.log(`✅ Login successful for user ${passwordResult.user.id}`);
+ 
+    res.json({
+      success: true,
+      user: passwordResult.user,
+      session: passwordResult.session,
+      profile: storeResult.profile,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('❌ Login endpoint error:', error.message);
+    res.status(500).json({
+      error: 'Login failed',
+      details: error.message,
+    });
+  }
 });
 
 export { app, supabaseAdmin };                                                                                                    //- Export for testing
