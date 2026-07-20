@@ -56,16 +56,7 @@ export const lookupPhoneNumber = async (phone) => {
     // Step 2: Get all stores linked to this user
     const { data: profiles, error: profileError } = await supabaseAdmin
       .from('profile')
-      .select(`
-        store_id,
-        role,
-        store:store_id (
-          store_id,
-          store_number,
-          store_name,
-          store_phone
-        )
-      `)
+      .select('store_id, role')
       .eq('auth_user_id', matchingUser.id);
 
     if (profileError) {
@@ -79,21 +70,34 @@ export const lookupPhoneNumber = async (phone) => {
       };
     }
 
+    // Fetch stores separately (bypass RLS issue)
+    const storeIds = profiles.map(p => p.store_id);
+    const { data: stores, error: storeError } = await supabaseAdmin
+      .from('store')
+      .select('store_id, store_number, store_name, store_phone')
+      .in('store_id', storeIds);
+
+    if (storeError) {
+      throw new Error(`Store lookup failed: ${storeError.message}`);
+    }
+
     console.log('🔍 Raw profiles:', JSON.stringify(profiles, null, 2));
     console.log(`✅ Found user ${matchingUser.id} with ${profiles.length} store(s)`);
-
 
     return {
       found: true,
       userId: matchingUser.id,
       phone: normalizedPhone,
-      stores: profiles.map((profile) => ({
-        storeId: profile.store_id,
-        storeName: profile.store?.store_name || 'Unknown Store',
-        storeNumber: profile.store?.store_number,
-        storePhone: profile.store?.store_phone,
-        role: profile.role,
-      })),
+      stores: profiles.map((profile) => {
+        const store = stores?.find(s => s.store_id === profile.store_id);
+        return {
+          storeId: profile.store_id,
+          storeName: store?.store_name || 'Unknown Store',
+          storeNumber: store?.store_number || 0,
+          storePhone: store?.store_phone || '',
+          role: profile.role,
+        };
+      }),
     };
   } catch (error) {
     console.error('❌ Phone lookup error:', error.message);

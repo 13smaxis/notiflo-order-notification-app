@@ -1,6 +1,7 @@
 
 import { useAppContext } from '@/contexts/AppContext';
 import { useOrders } from '@/hooks/useOrders';
+import { supabase } from '@/lib/supabase';
 import { Plus, Hash, X, Phone } from 'lucide-react';
 import React from 'react';
 
@@ -11,12 +12,21 @@ interface AddOrderModalProps {
 }
 
 export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, onOrderCreated }) => {
-  const { storeId } = useAppContext();
-  const { addOrder } = useOrders(storeId, { subscribeRealtime: false });
+  // const { storeId } = useAppContext();
+  //const { addOrder } = useOrders(storeId, { subscribeRealtime: false });
+  // Get selected store from localStorage (set during login)
+  const selectedStoreId = typeof window !== 'undefined'
+    ? window.localStorage.getItem('selected_store')
+    : null;
 
+  // Fallback to context if no localStorage (for backward compatibility)
+  const { storeId: contextStoreId } = useAppContext();
+  const storeId = selectedStoreId || contextStoreId;
+
+  const { addOrder } = useOrders(storeId, { subscribeRealtime: false });
   const [orderNumber, setOrderNumber] = React.useState('');
   const [totalAmount, setTotalAmount] = React.useState('');
-  const [customerPhone, setCustomerPhone] = React.useState(''); 
+  const [customerPhone, setCustomerPhone] = React.useState('');
   const [customerName, setCustomerName] = React.useState('');
   const [localError, setLocalError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
@@ -37,6 +47,17 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, o
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+
+    if (!session) {
+      setLocalError('Not authenticated. Please login again.');
+      return;
+    }
+
+    // NOW proceed with order creation
+    setSubmitting(true);
 
     const generatedOrderNumber = orderNumber.trim() || generateOrderNumber();
 
