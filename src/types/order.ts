@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-export type OrderStage = 'queue' | 'preparing' | 'ready' | 'collected';
+export type OrderStage = 'queue' | 'preparing' | 'ready' | 'collected' | 'cancelled';
 
 // ============= DATABASE TYPES (from Supabase) =============
 
@@ -156,6 +156,7 @@ export function mapStatusCodeToStage(statusCode: string): OrderStage {
     case 'queue':
     case 'ready':
     case 'collected':
+    case 'cancelled':
       return statusCode as OrderStage;
     default:
       return 'queue';

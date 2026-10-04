@@ -394,6 +394,15 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
           throw new Error(customerError || 'Failed to create/find customer');
         }
 
+        const { data: creatorProfile, error: creatorProfileError } = await supabase
+          .from('profile')
+          .select('employee_id')
+          .eq('auth_user_id', session.user.id)
+          .eq('store_id', storeId)
+          .maybeSingle();
+
+        if (creatorProfileError) throw creatorProfileError;
+
         const { data: existingOrder, error: existingOrderError } = await supabase
           .from('orders')
           .select('order_id')
@@ -417,7 +426,8 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
             customer_id: customerId,
             status_id: queueStatus.status_id,
             order_number: orderData.order_number,
-            total_amount: orderData.total_amount
+            total_amount: orderData.total_amount,
+            created_by_employee_id: creatorProfile?.employee_id || null,
           }])
           .select(`
             *,
@@ -452,13 +462,33 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
       try {
         // Resolve the target status directly instead of relying on async hook state.
         const statusCode = mapStageToStatusCode(newStage);
-        const { data: newStatus, error: statusError } = await supabase
+        const { data: fetchedStatus, error: statusError } = await supabase
           .from('order_status')
           .select('*')
           .eq('status_code', statusCode)
           .maybeSingle();
 
         if (statusError) throw statusError;
+        let newStatus = fetchedStatus;
+
+        if (!newStatus && statusCode === 'cancelled') {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.access_token) throw new Error('Your session has expired. Please log in again.');
+
+          const ensureResponse = await fetch(apiUrl('/api/order-status/ensure-defaults'), {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          const ensureResult = await ensureResponse.json() as { statuses?: OrderStatus[]; error?: string };
+          if (!ensureResponse.ok || !ensureResult.statuses) {
+            throw new Error(ensureResult.error || 'Unable to prepare order cancellation.');
+          }
+          newStatus = ensureResult.statuses.find((status) => status.status_code === statusCode) || null;
+        }
+
         if (!newStatus) {
           throw new Error(`Status '${statusCode}' not found`);
         }
@@ -483,6 +513,11 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
       }
     },
     []
+  );
+
+  const cancelOrder = useCallback(
+    (orderId: string) => updateOrderStatus(orderId, 'cancelled'),
+    [updateOrderStatus]
   );
 
   // Search orders
@@ -541,6 +576,7 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
     addOrder,
     updateOrderStatus,
     updateOrderStage: updateOrderStatus,
+    cancelOrder,
     searchOrder,
     deleteOrder,
     getStatusByCode,

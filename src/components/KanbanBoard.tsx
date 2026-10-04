@@ -16,6 +16,16 @@ import
 import { CSS } from '@dnd-kit/utilities';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle, Clock, Flame, ShoppingBag } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { OrderCard } from './OrderCard';
 import { Order, OrderStage, STAGES } from '@/types/order';
 import { ServerEventMetadata, ServerEventName } from '@/lib/api';
@@ -30,6 +40,7 @@ interface KanbanBoardProps
 {
   orders: Order[];
   onMoveOrder: (orderId: string, newStage: OrderStage, details: { fromStage: OrderStage; durationMs: number }) => void;
+  onCancelOrder: (orderId: string) => void;
   onBoardEvent: (eventType: ServerEventName, metadata: ServerEventMetadata) => void;
   loading: boolean;
 }
@@ -144,7 +155,7 @@ const StageColumn: React.FC<{
  * It takes in an order object and a boolean indicating if the card is currently being dragged.
  * The component uses the useDraggable hook from @dnd-kit/core to make the card draggable.
  */
-const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ order, isDragging }) => {
+const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean; onCancelOrder: (orderId: string) => void }> = ({ order, isDragging, onCancelOrder }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging: isDragActive } = useDraggable({
     id: order.id,                                                                                                                 //-Using id alias (order_id)
   });
@@ -164,7 +175,7 @@ const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ o
         isDragging || isDragActive ? 'opacity-0' : ''
       }`}
     >
-      <OrderCard order={order} onMoveOrder={() => {}} isDragging={isDragging || isDragActive} compact />
+      <OrderCard order={order} onMoveOrder={() => {}} onCancelOrder={onCancelOrder} isDragging={isDragging || isDragActive} compact />
     </div>
   );
 };
@@ -174,10 +185,11 @@ const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ o
  * It takes in an array of orders, a callback function for moving orders, and a loading state.
  * The component uses the DndContext from @dnd-kit/core to manage drag-and-drop functionality across the entire board.
  */
-export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, onBoardEvent, loading }) => {
+export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, onCancelOrder, onBoardEvent, loading }) => {
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [activeOrderStage, setActiveOrderStage] = useState<OrderStage | null>(null);
   const [overStageId, setOverStageId] = useState<OrderStage | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
   const [visibleCollectedOrders, setVisibleCollectedOrders] = useState<Set<string>>(new Set());
   const dragStartedAt = useRef<number | null>(null);
   const lastOverStage = useRef<OrderStage | null>(null);
@@ -342,7 +354,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, o
         <div className="flex items-center justify-center py-8 text-white/40" />
       ) : (
         ordersByStage[stage.id].map((order) => (
-          <DraggableOrderCard key={order.id} order={order} isDragging={activeOrderId === order.id} />
+          <DraggableOrderCard
+            key={order.id}
+            order={order}
+            isDragging={activeOrderId === order.id}
+            onCancelOrder={(orderId) => setCancelTarget(orders.find((item) => item.id === orderId) ?? null)}
+          />
         ))
       )}
     </StageColumn>
@@ -400,6 +417,30 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, o
       <DragOverlay>
         {activeOrder ? <OrderCard order={activeOrder} onMoveOrder={() => {}} isDragging={true} /> : null}
       </DragOverlay>
+
+      <AlertDialog open={Boolean(cancelTarget)} onOpenChange={(open) => { if (!open) setCancelTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel order #{cancelTarget?.order_number}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This order will leave the active board and remain in sales reports as cancelled.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep order</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-700 text-white hover:bg-rose-800"
+              onClick={(event) => {
+                event.preventDefault();
+                if (cancelTarget) onCancelOrder(cancelTarget.id);
+                setCancelTarget(null);
+              }}
+            >
+              Cancel order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DndContext>
   );
 }; 

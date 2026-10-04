@@ -3,6 +3,7 @@ export const DEFAULT_ORDER_STATUSES = [
   { status_code: 'preparing', status_name: 'Preparing', sequence_order: 2 },
   { status_code: 'ready', status_name: 'Ready', sequence_order: 3 },
   { status_code: 'collected', status_name: 'Collected', sequence_order: 4 },
+  { status_code: 'cancelled', status_name: 'Cancelled', sequence_order: 5 },
 ];
 
 export const ensureDefaultOrderStatuses = async (supabase) => {

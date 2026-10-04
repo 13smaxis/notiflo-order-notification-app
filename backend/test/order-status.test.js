@@ -43,10 +43,10 @@ test('creates missing workflow statuses and returns the queue status for order c
 
   const statuses = await ensureDefaultOrderStatuses(store);
 
-  assert.equal(statuses.length, 4);
+  assert.equal(statuses.length, 5);
   assert.equal(statuses[0].status_id, 'existing-queue');
   assert.equal(statuses[0].status_name, 'Custom Queue');
-  assert.deepEqual(store.insertedCodes, ['preparing', 'ready', 'collected']);
+  assert.deepEqual(store.insertedCodes, ['preparing', 'ready', 'collected', 'cancelled']);
 });
 
 test('recovers from a concurrent status insert without overwriting existing rows', async () => {
@@ -70,6 +70,6 @@ test('recovers from a concurrent status insert without overwriting existing rows
 
   const statuses = await ensureDefaultOrderStatuses(store);
 
-  assert.equal(statuses.length, 4);
+  assert.equal(statuses.length, 5);
   assert.equal(statuses[0].status_id, 'raced-queue');
 });

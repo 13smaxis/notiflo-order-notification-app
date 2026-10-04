@@ -91,10 +91,10 @@ export const AppLayout: React.FC = () => {
   const [statsNow, setStatsNow] = useState(() => Date.now());                                                    //-Tracks the current time so collected stats can roll over at 2AM
 
   //Custom Hooks for Data & Auth
-  const { orders, loading, error, addOrder, updateOrderStage, searchOrder, refetch } = useOrders();             //-Custom hook for fetching and updating orders(encaspulates order logic)
+  const { orders, loading, error, addOrder, updateOrderStage, cancelOrder, searchOrder, refetch } = useOrders(); //-Custom hook for fetching and updating orders(encaspulates order logic)
   const { user, logout, isAuthenticated, loading: authLoading, selectStore } = useAuth();                        //-Custom hook for authentication
 
-  const displayOrders = orders.map((order) => {
+  const displayOrders = orders.filter((order) => order.stage !== 'cancelled').map((order) => {
     const pendingStage = pendingOrderStages[order.id];
     if (!pendingStage) {
       return order;
@@ -284,6 +284,18 @@ export const AppLayout: React.FC = () => {
       ...metadata,
       storeId: user?.selectedStoreId ?? undefined,
     });
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    const order = orders.find((currentOrder) => currentOrder.id === orderId);
+    const result = await cancelOrder(orderId);
+
+    if (result.error) {
+      setToast({ message: result.error, type: 'error' });
+      return;
+    }
+
+    setToast({ message: `Order #${order?.order_number ?? ''} cancelled`, type: 'success' });
   };
 
   /** 
@@ -481,6 +493,7 @@ export const AppLayout: React.FC = () => {
               <KanbanBoard
                 orders={displayOrders}
                 onMoveOrder={handleMoveOrder}
+                onCancelOrder={handleCancelOrder}
                 onBoardEvent={handleBoardEvent}
                 loading={loading}
               />                                                                                                {/* Calls the Kanban Board Component */}

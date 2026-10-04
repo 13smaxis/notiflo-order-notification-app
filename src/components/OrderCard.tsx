@@ -1,10 +1,11 @@
 
 import { Order, OrderStage, STAGES } from '@/types/order';
-import { Clock, Flame, CheckCircle, ShoppingBag, Phone, Calendar, Timer } from 'lucide-react';
+import { Clock, Flame, CheckCircle, ShoppingBag, Phone, Calendar, Timer, Ban } from 'lucide-react';
 
 interface OrderCardProps {
   order: Order;
   onMoveOrder: (orderId: string, newStage: OrderStage) => void;
+  onCancelOrder?: (orderId: string) => void;
   isDragging?: boolean;
   compact?: boolean;
 }
@@ -51,7 +52,7 @@ const PreparingTimer: React.FC<{
   );
 };
 
-export const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, isDragging, compact = false }) => {
+export const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, onCancelOrder, isDragging, compact = false }) => {
   const stageConfig = STAGES.find((s) => s.id === order.stage);
 
   const formatDate = (dateString: string) => {
@@ -99,6 +100,21 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onMoveOrder, isDrag
             <StageIcon stage={order.stage} className={compact ? 'w-1.5 h-1.5' : 'w-2 h-2'} />
             <span className="hidden sm:inline">{stageConfig?.title}</span>
           </div>
+          {onCancelOrder && order.stage !== 'collected' && order.stage !== 'cancelled' && (
+            <button
+              type="button"
+              title="Cancel order"
+              aria-label={`Cancel order ${order.order_number}`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                onCancelOrder(order.id);
+              }}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+            >
+              <Ban className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {/* Order details */}
