@@ -3,6 +3,7 @@ import { Store, Tag, X, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
+import { apiUrl } from '@/lib/api';
 
 interface AddStoreModalProps {
   isOpen: boolean;
@@ -99,7 +100,7 @@ export const AddStoreModal: React.FC<AddStoreModalProps> = ({
       }
 
       // Call backend add-store endpoint
-      const response = await fetch('http://localhost:3000/api/add-store', {
+      const response = await fetch(apiUrl('/api/add-store'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${user.accessToken}`,

@@ -30,9 +30,12 @@ dotenv.config();
 const app = express();
 
 // CORS configuration for both local and production
+const frontendOrigin = (
+    process.env.FRONTEND_URL || 'https://notiflo-order-notification-app.vercel.app'
+).replace(/\/+$/, '');
 const corsOrigin = process.env.NODE_ENV === 'production'
-  ? 'https://your-vercel-app.vercel.app' 
-  : 'http://localhost:8080';
+    ? frontendOrigin
+    : 'http://localhost:8080';
 
 app.use(cors({
   origin: corsOrigin,

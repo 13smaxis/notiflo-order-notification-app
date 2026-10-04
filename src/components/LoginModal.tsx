@@ -3,6 +3,7 @@ import { Phone, Store, Lock, X, AlertCircle, Loader } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
+import { apiUrl } from '@/lib/api';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -64,7 +65,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
       console.log('📱 Looking up phone:', normalizedPhone);
 
-      const response = await fetch('http://localhost:3000/api/auth/lookup-phone', {
+      const response = await fetch(apiUrl('/api/auth/lookup-phone'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phoneNumber: normalizedPhone }),
@@ -124,7 +125,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
       console.log('🔐 Verifying password...');
 
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch(apiUrl('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

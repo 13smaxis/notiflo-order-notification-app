@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { apiUrl } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 
 interface RegisterModalProps {
@@ -127,7 +128,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
               return;
             }
 
-            const addStoreResponse = await fetch('/api/add-store', {
+            const addStoreResponse = await fetch(apiUrl('/api/add-store'), {
               method: 'POST',
               headers: {
                 Authorization: `Bearer ${loginData.session.access_token}`,

@@ -44,7 +44,10 @@ Create a local `.env` file with the backend secrets used by `server.js`:
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_PHONE_NUMBER`
 - `TWILIO_WHATSAPP_NUMBER`
+- `FRONTEND_URL` (production frontend origin allowed by CORS; defaults to `https://notiflo-order-notification-app.vercel.app`)
 - `PORT` (optional, defaults to `3000`)
+
+For the Render deployment, set `FRONTEND_URL` to `https://notiflo-order-notification-app.vercel.app`.
 
 ## Scripts
 
