@@ -26,22 +26,27 @@ import { processPendingWhatsAppNotifications } from './services/whatsapp.js';
 import { processPendingSMSNotifications } from './services/sms.js';
 import { lookupPhoneNumber, verifyPassword, selectStore } from './services/auth.js';
 
-dotenv.config();                                                                                                                  //- Load environment variables
-const app = express();                                                                                                            //- Initialize Express
+dotenv.config();
+const app = express();
+
+// CORS configuration for both local and production
+const corsOrigin = process.env.NODE_ENV === 'production'
+  ? 'https://your-vercel-app.vercel.app' 
+  : 'http://localhost:8080';
 
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: corsOrigin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-app.use(express.json());                                                                                                          //- Middleware to parse JSON request bodies
+app.use(express.json());
 
 const supabaseAdmin = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
-);                                                                                                                                //- Create Supabase client with service role key for admin access
+);                                                                                                                               //- Create Supabase client with service role key for admin access
 
 /*
  * Health check endpoint to verify server and Supabase connection status.
