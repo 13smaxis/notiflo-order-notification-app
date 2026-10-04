@@ -28,6 +28,7 @@ import { lookupPhoneNumber, verifyPassword, selectStore } from './services/auth.
 import { logEvent } from './services/logger.js';
 import { requestLogger } from './services/request-logger.js';
 import { normalizeClientEvent } from './services/client-events.js';
+import { ensureDefaultOrderStatuses } from './services/order-status.js';
 
 dotenv.config();
 const app = express();
@@ -264,6 +265,26 @@ app.post('/api/events', verifyAuth, (req, res) => {
     const { eventType, ...fields } = event;
     logEvent('info', eventType, { requestId: req.requestId, ...fields });
     res.status(202).json({ accepted: true });
+});
+
+app.post('/api/order-status/ensure-defaults', verifyAuth, async (req, res) => {
+    try {
+        const statuses = await ensureDefaultOrderStatuses(supabaseAdmin);
+        logEvent('info', 'order_status.defaults.ensured', {
+            requestId: req.requestId,
+            userId: req.user.id,
+            statusCount: statuses.length,
+        });
+        res.json({ statuses });
+    } catch (error) {
+        logEvent('error', 'order_status.defaults.ensure_failed', {
+            requestId: req.requestId,
+            userId: req.user.id,
+            errorCode: error.code,
+            errorType: error.name,
+        });
+        res.status(500).json({ error: 'Unable to prepare order statuses' });
+    }
 });
 
 

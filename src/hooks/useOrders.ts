@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { apiUrl } from '@/lib/api';
 import {
   Order,
   OrderStage,
@@ -168,6 +169,7 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
         .select('*')
         .order('sequence_order', { ascending: true });
 
+      if (error) throw error;
       setStatuses(data || []);
     } catch (err: unknown) {
       console.error('Fetch statuses error:', err);
@@ -354,6 +356,33 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
       }
 
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          throw new Error('Your session has expired. Please log in again.');
+        }
+
+        const statusResponse = await fetch(apiUrl('/api/order-status/ensure-defaults'), {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const statusResult = await statusResponse.json() as {
+          statuses?: OrderStatus[];
+          error?: string;
+        };
+
+        if (!statusResponse.ok || !statusResult.statuses) {
+          throw new Error(statusResult.error || 'Unable to prepare the order queue. Please try again.');
+        }
+
+        const queueStatus = statusResult.statuses.find((status) => status.status_code === 'queue');
+        if (!queueStatus) {
+          throw new Error('The order queue could not be initialized. Please try again.');
+        }
+        setStatuses(statusResult.statuses);
+
         // Get or create customer
         const { customerId, error: customerError } = await getOrCreateCustomer(
           orderData.customer_phone,
@@ -363,12 +392,6 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
 
         if (customerError || !customerId) {
           throw new Error(customerError || 'Failed to create/find customer');
-        }
-
-        // Get 'queue' status
-        const queueStatus = getStatusByCode('queue');
-        if (!queueStatus) {
-          throw new Error('Queue status not found');
         }
 
         const { data: existingOrder, error: existingOrderError } = await supabase
@@ -420,16 +443,22 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
         return { data: null, error: getErrorMessage(err, 'Failed to add order') };
       }
     },
-    [storeId, getOrCreateCustomer, getStatusByCode]
+    [storeId, getOrCreateCustomer]
   );
 
   // Update order status (drag and drop)
   const updateOrderStatus = useCallback(
     async (orderId: string, newStage: OrderStage) => {
       try {
-        // Map UI stage to database status code
+        // Resolve the target status directly instead of relying on async hook state.
         const statusCode = mapStageToStatusCode(newStage);
-        const newStatus = getStatusByCode(statusCode);
+        const { data: newStatus, error: statusError } = await supabase
+          .from('order_status')
+          .select('*')
+          .eq('status_code', statusCode)
+          .maybeSingle();
+
+        if (statusError) throw statusError;
         if (!newStatus) {
           throw new Error(`Status '${statusCode}' not found`);
         }
@@ -453,7 +482,7 @@ export function useOrders(storeId: string | null, options: UseOrdersOptions = {}
         return { error: getErrorMessage(err, 'Failed to update order') };
       }
     },
-    [getStatusByCode]
+    []
   );
 
   // Search orders
