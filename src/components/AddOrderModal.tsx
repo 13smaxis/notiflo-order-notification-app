@@ -43,26 +43,17 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, o
 
     setOrderNumber(generateOrderNumber());
     setLocalError(null);
+    setSubmitting(false);
   }, [generateOrderNumber, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
 
-    const { data: { session } } = await supabase.auth.getSession();
-
-
-    if (!session) {
-      setLocalError('Not authenticated. Please login again.');
-      return;
-    }
-
-    // NOW proceed with order creation
-    setSubmitting(true);
-
     const generatedOrderNumber = orderNumber.trim() || generateOrderNumber();
+    const amount = Number(totalAmount);
 
-    if (!totalAmount || parseFloat(totalAmount) <= 0) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       setLocalError('Please enter a valid amount');
       return;
     }
@@ -72,13 +63,23 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, o
       return;
     }
 
-    setSubmitting(true);
+    let session;
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      session = data.session;
+      if (!session) throw new Error('Not authenticated. Please login again.');
+    } catch (error) {
+      setLocalError(error instanceof Error ? error.message : 'Unable to verify your session. Please try again.');
+      return;
+    }
 
+    setSubmitting(true);
     try {
       const { data, error } = await addOrder({
         order_number: generatedOrderNumber,
         customer_phone: customerPhone.trim(),
-        total_amount: parseFloat(totalAmount),
+        total_amount: amount,
         customer_name: customerName.trim() || undefined
       });
 
@@ -87,21 +88,25 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, o
         return;
       }
 
-      if (data) {
-        void sendServerEvent(session.access_token, 'order.created', {
-          orderId: data.id,
-          orderNumber: generatedOrderNumber,
-          storeId: storeId ?? undefined,
-        });
-        await onOrderCreated?.();
-
-        // Reset form and close
-        setOrderNumber('');
-        setTotalAmount('');
-        setCustomerPhone('');
-        setCustomerName('');
-        onClose();
+      if (!data) {
+        setLocalError('The order could not be created. Please try again.');
+        return;
       }
+
+      void sendServerEvent(session.access_token, 'order.created', {
+        orderId: data.id,
+        orderNumber: generatedOrderNumber,
+        storeId: storeId ?? undefined,
+      });
+      await onOrderCreated?.();
+
+      setOrderNumber('');
+      setTotalAmount('');
+      setCustomerPhone('');
+      setCustomerName('');
+      onClose();
+    } catch (error) {
+      setLocalError(error instanceof Error ? error.message : 'Failed to create order. Please try again.');
     } finally {
       setSubmitting(false);
     }

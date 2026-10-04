@@ -367,23 +367,46 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, o
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-amber-200 rounded-full animate-pulse" />
-            <div className="
-                              absolute 
-                              inset-0 
-                              w-16 h-16 
-                              border-4 border-amber-500 border-t-transparent 
-                              rounded-full 
-                              animate-spin
-                            " 
-            />
+      <section
+        role="status"
+        aria-live="polite"
+        aria-label="Loading order cards"
+        className="flex min-h-[min(68vh,640px)] flex-col overflow-hidden rounded-3xl bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-3 text-white"
+      >
+        <div className="mb-4 flex items-center justify-between gap-3 px-1">
+          <div>
+            <p className="text-sm font-semibold text-white">Loading order cards</p>
+            <p className="mt-0.5 text-xs text-slate-300">Waiting for the latest store orders…</p>
           </div>
-          <p className="text-gray-500 font-medium">Loading orders...</p>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-200/40 border-t-amber-300" />
+          </div>
         </div>
-      </div>
+
+        <div className="grid min-h-0 flex-1 grid-cols-2 gap-2 md:gap-3 xl:grid-cols-4">
+          {STAGES.map((stage) => (
+            <div key={stage.id} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950/20 p-2 sm:p-3">
+              <div className="mb-3 flex items-center justify-between gap-2 px-1 py-1">
+                <span className="truncate text-xs font-semibold text-slate-100 sm:text-sm">{stage.title}</span>
+                <span className="h-5 w-7 animate-pulse rounded-full bg-white/10" />
+              </div>
+              <div className="space-y-2">
+                {[0, 1, 2].map((card) => (
+                  <div key={card} className="animate-pulse rounded-lg border border-white/60 bg-slate-100/95 p-3 shadow-sm">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <span className="h-3 w-14 rounded bg-slate-300" />
+                      <span className="h-5 w-16 rounded-full bg-slate-200" />
+                    </div>
+                    <span className="mb-2 block h-2.5 w-2/3 rounded bg-slate-200" />
+                    <span className="block h-2.5 w-1/2 rounded bg-slate-200" />
+                    <div className="mt-3 h-8 rounded-md bg-amber-100/80" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     );
   }
 
