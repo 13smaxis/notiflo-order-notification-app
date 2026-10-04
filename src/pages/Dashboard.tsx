@@ -4,7 +4,6 @@ import {
   Activity,
   ArrowLeft,
   Ban,
-  BellRing,
   CalendarDays,
   ChartNoAxesCombined,
   ChevronDown,
@@ -14,7 +13,6 @@ import {
   PackageCheck,
   RefreshCw,
   Store,
-  Users,
 } from 'lucide-react';
 import {
   Bar,
@@ -32,7 +30,6 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { apiUrl } from '@/lib/api';
-import type { OrderStage } from '@/types/order';
 
 type Period = 'today' | '7d' | 'month' | 'custom';
 
@@ -72,22 +69,24 @@ function StatCard({
   detail,
   icon: Icon,
   tone,
+  surface,
 }: {
   label: string;
   value: string;
   detail: string;
   icon: React.ComponentType<{ className?: string }>;
   tone: string;
+  surface: string;
 }) {
   return (
-    <article className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <article className={`group min-w-0 rounded-lg border border-l-4 p-4 shadow-[0_2px_10px_rgba(15,23,42,0.035)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] sm:p-5 ${surface}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-2 truncate text-2xl font-semibold tabular-nums text-slate-900">{value}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+          <p className="mt-2 truncate text-[1.7rem] font-semibold tabular-nums text-slate-950">{value}</p>
           <p className="mt-1 text-xs text-slate-500">{detail}</p>
         </div>
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tone}`}>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ring-1 ring-inset ring-black/5 ${tone}`}>
           <Icon className="h-5 w-5" />
         </span>
       </div>
@@ -95,12 +94,15 @@ function StatCard({
   );
 }
 
-function ChartPanel({ title, caption, children }: { title: string; caption: string; children: React.ReactNode }) {
+function ChartPanel({ title, caption, accent, surface, children }: { title: string; caption: string; accent: string; surface: string; children: React.ReactNode }) {
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-      <div className="mb-4">
-        <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-        <p className="mt-1 text-xs text-slate-500">{caption}</p>
+    <section className={`min-w-0 rounded-lg border p-4 shadow-[0_2px_10px_rgba(15,23,42,0.035)] sm:p-5 ${surface}`}>
+      <div className="mb-4 flex items-start gap-3">
+        <span className={`mt-0.5 h-9 w-1 shrink-0 rounded-full ${accent}`} />
+        <div>
+          <h2 className="text-base font-semibold text-slate-950">{title}</h2>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500">{caption}</p>
+        </div>
       </div>
       {children}
     </section>
@@ -203,48 +205,52 @@ export default function DashboardPage() {
   if (user?.profile?.role?.toLowerCase() !== 'owner') return null;
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#f1f5f3] text-slate-900">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-50 [background-image:linear-gradient(rgba(21,90,76,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(21,90,76,0.035)_1px,transparent_1px)] [background-size:32px_32px]"
+      />
+      <header className="relative border-b border-emerald-950/30 bg-[#173e38] text-white shadow-[0_4px_18px_rgba(12,43,38,0.16)]">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               to="/"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/20 bg-white/5 text-emerald-50 transition hover:bg-white/10 hover:text-white"
               aria-label="Back to order board"
               title="Back to order board"
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-800">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#e8b653] text-[#173e38] shadow-sm">
               <LayoutDashboard className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">NotiFlo / Owner</p>
-              <h1 className="truncate text-lg font-semibold text-slate-900">Operations dashboard</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100/75">NotiFlo / Owner</p>
+              <h1 className="truncate text-lg font-semibold text-white">Operations dashboard</h1>
             </div>
           </div>
 
           <label className="relative flex min-w-[210px] items-center gap-2">
-            <Store className="pointer-events-none absolute left-3 h-4 w-4 text-slate-400" />
+            <Store className="pointer-events-none absolute left-3 h-4 w-4 text-emerald-100" />
             <select
               value={storeId ?? ''}
               onChange={(event) => selectStore(event.target.value)}
-              className="h-10 w-full appearance-none rounded-md border border-slate-200 bg-white pl-9 pr-9 text-sm font-medium text-slate-800 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+              className="h-10 w-full appearance-none rounded-md border border-white/20 bg-white/10 pl-9 pr-9 text-sm font-medium text-white outline-none transition focus:border-[#e8b653] focus:ring-2 focus:ring-[#e8b653]/30"
               aria-label="Select store"
             >
               <option value="" disabled>Select a store</option>
               {user?.availableStores.map((store) => (
-                <option key={store.store_id} value={store.store_id}>
+                <option key={store.store_id} value={store.store_id} className="bg-white text-slate-900">
                   {storeNames[store.store_id] || store.store_name}
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4 text-slate-400" />
+            <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4 text-emerald-100" />
           </label>
         </div>
       </header>
 
-      <div className="mx-auto max-w-[1440px] space-y-5 px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+      <div className="relative mx-auto max-w-[1440px] space-y-5 px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
         {storeNameError && (
           <div role="status" className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             {storeNameError} Showing available profile names instead.
@@ -252,11 +258,11 @@ export default function DashboardPage() {
         )}
         <section className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-emerald-800">
+            <p className="text-sm font-semibold text-emerald-800">
               {activeStore ? storeNames[activeStore.store_id] || activeStore.store_name : 'Store overview'}
             </p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Performance at a glance</h2>
-            <p className="mt-1 text-sm text-slate-500">Orders and service outcomes for {rangeLabel}</p>
+            <p className="mt-1 text-sm text-slate-600">Orders and service outcomes for {rangeLabel}</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -276,7 +282,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <section className="flex flex-col gap-3 rounded-lg border border-emerald-200 bg-[#e4eee9] p-3 shadow-[0_2px_10px_rgba(15,23,42,0.035)] sm:flex-row sm:items-center sm:justify-between sm:p-4">
           <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Reporting period">
             {([
               ['today', 'Today'],
@@ -343,10 +349,10 @@ export default function DashboardPage() {
         ) : (
           <>
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-busy={loading}>
-              <StatCard label="Orders" value={loading ? '—' : metrics.orderCount.toLocaleString('en-ZA')} detail={`${metrics.activeOrderCount} active · ${metrics.cancelledOrderCount} cancelled`} icon={PackageCheck} tone="bg-sky-50 text-sky-800" />
-              <StatCard label="Net sales" value={loading ? '—' : formatCurrency(metrics.revenue)} detail="Excludes cancelled orders" icon={CircleDollarSign} tone="bg-emerald-50 text-emerald-800" />
-              <StatCard label="Average order value" value={loading ? '—' : formatCurrency(metrics.averageOrderValue)} detail="Per non-cancelled order" icon={ChartNoAxesCombined} tone="bg-amber-50 text-amber-800" />
-              <StatCard label="Cancelled" value={loading ? '—' : metrics.cancelledOrderCount.toLocaleString('en-ZA')} detail="Preserved for reporting" icon={Ban} tone="bg-rose-50 text-rose-800" />
+              <StatCard label="Orders" value={loading ? '—' : metrics.orderCount.toLocaleString('en-ZA')} detail={`${metrics.activeOrderCount} active · ${metrics.cancelledOrderCount} cancelled`} icon={PackageCheck} tone="bg-sky-200 text-sky-900" surface="border-sky-300 bg-[#e2eef2]" />
+              <StatCard label="Net sales" value={loading ? '—' : formatCurrency(metrics.revenue)} detail="Excludes cancelled orders" icon={CircleDollarSign} tone="bg-emerald-200 text-emerald-900" surface="border-emerald-300 bg-[#dcece4]" />
+              <StatCard label="Average order value" value={loading ? '—' : formatCurrency(metrics.averageOrderValue)} detail="Per non-cancelled order" icon={ChartNoAxesCombined} tone="bg-amber-200 text-amber-950" surface="border-amber-300 bg-[#f4edd9]" />
+              <StatCard label="Cancelled" value={loading ? '—' : metrics.cancelledOrderCount.toLocaleString('en-ZA')} detail="Preserved for reporting" icon={Ban} tone="bg-rose-200 text-rose-900" surface="border-rose-300 bg-[#f2e4df]" />
             </section>
 
             {loading ? (
@@ -355,8 +361,8 @@ export default function DashboardPage() {
               </div>
             ) : (
               <>
-                <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
+                <section className="overflow-hidden rounded-lg border border-emerald-200 bg-[#e7f0eb] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200 bg-[#dce9e2] px-4 py-4 sm:px-5">
                     <div>
                       <h2 className="text-base font-semibold text-slate-900">Recent orders</h2>
                       <p className="mt-1 text-xs text-slate-500">Latest orders created during this reporting period</p>
@@ -366,7 +372,7 @@ export default function DashboardPage() {
                   {metrics.recentOrders.length ? (
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[600px] text-left text-sm">
-                        <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                        <thead className="bg-[#d2e2da] text-xs uppercase tracking-wide text-slate-700">
                           <tr>
                             <th className="px-5 py-3 font-medium">Order</th>
                             <th className="px-5 py-3 font-medium">Created</th>
@@ -374,11 +380,11 @@ export default function DashboardPage() {
                             <th className="px-5 py-3 text-right font-medium">Total</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-emerald-100 bg-[#edf4f0]">
                           {metrics.recentOrders.map((order) => {
                             const stage = order.status?.status_code || 'queue';
                             return (
-                              <tr key={order.order_id} className="text-slate-700">
+                              <tr key={order.order_id} className="text-slate-700 transition-colors odd:bg-white/35 hover:bg-emerald-100/70">
                                 <td className="px-5 py-3.5 font-semibold text-slate-900">#{order.order_number}</td>
                                 <td className="px-5 py-3.5 text-slate-500">{new Date(order.created_at).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' })}</td>
                                 <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${stageStyles[stage] || stageStyles.queue}`}>{order.status?.status_name || stage}</span></td>
@@ -395,7 +401,7 @@ export default function DashboardPage() {
                 </section>
 
                 <section className="grid min-w-0 gap-4 xl:grid-cols-[1.55fr_1fr]">
-                  <ChartPanel title="Sales by day" caption="Net sales from orders created in the selected period">
+                  <ChartPanel title="Sales by day" caption="Net sales from orders created in the selected period" accent="bg-emerald-700" surface="border-emerald-200 bg-[#e1eee7]">
                     {metrics.dailySales.length ? (
                       <div className="h-[280px] w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%">
@@ -415,7 +421,7 @@ export default function DashboardPage() {
                     ) : <EmptyChart message="No orders were created during this period." />}
                   </ChartPanel>
 
-                  <ChartPanel title="Order status mix" caption="Current status of orders created in the selected period">
+                  <ChartPanel title="Order status mix" caption="Current status of orders created in the selected period" accent="bg-sky-700" surface="border-sky-200 bg-[#e4eef2]">
                     {metrics.stageCounts.length ? (
                       <div className="h-[280px] w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%">
@@ -433,7 +439,7 @@ export default function DashboardPage() {
                 </section>
 
                 <section className="grid min-w-0 gap-4 xl:grid-cols-2">
-                  <ChartPanel title="Sales by employee" caption="Order creator attribution; earlier unattributed orders appear as Unassigned">
+                  <ChartPanel title="Sales by employee" caption="Order creator attribution; earlier unattributed orders appear as Unassigned" accent="bg-amber-600" surface="border-amber-200 bg-[#f4eedf]">
                     {metrics.employeeSales.length ? (
                       <div className="h-[280px] w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%">
@@ -449,7 +455,7 @@ export default function DashboardPage() {
                     ) : <EmptyChart message="Employee sales will appear when orders are attributed to a store employee." />}
                   </ChartPanel>
 
-                  <ChartPanel title="Notification outcomes" caption="SMS and WhatsApp deliveries created during the selected period">
+                  <ChartPanel title="Notification outcomes" caption="SMS and WhatsApp deliveries created during the selected period" accent="bg-rose-600" surface="border-rose-200 bg-[#f2e8e4]">
                     {metrics.notificationOutcomes.length ? (
                       <div className="h-[280px] w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%">
