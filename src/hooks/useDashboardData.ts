@@ -20,6 +20,7 @@ export function useDashboardData(storeId: string | null, startDate: string, endD
   const [loading, setLoading] = useState(Boolean(storeId));
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!storeId) {
@@ -94,7 +95,13 @@ export function useDashboardData(storeId: string | null, startDate: string, endD
 
     void loadMetrics();
     return () => { active = false; };
-  }, [endDate, startDate, storeId]);
+  }, [endDate, refreshKey, startDate, storeId]);
 
-  return { metrics, loading, error, warnings };
+  return {
+    metrics,
+    loading,
+    error,
+    warnings,
+    refresh: () => setRefreshKey((current) => current + 1),
+  };
 }

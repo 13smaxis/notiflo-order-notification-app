@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   LoaderCircle,
   PackageCheck,
+  RefreshCw,
   Store,
   Users,
 } from 'lucide-react';
@@ -147,7 +148,7 @@ export default function DashboardPage() {
   }
 
   const invalidRange = startDate > endDate;
-  const { metrics, loading, error, warnings } = useDashboardData(storeId, startDate, endDate);
+  const { metrics, loading, error, warnings, refresh } = useDashboardData(storeId, startDate, endDate);
   const rangeLabel = startDate === endDate
     ? new Intl.DateTimeFormat('en-ZA', { dateStyle: 'medium' }).format(new Date(`${startDate}T12:00:00`))
     : `${formatDateLabel(startDate)} – ${formatDateLabel(endDate)}`;
@@ -210,10 +211,22 @@ export default function DashboardPage() {
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Performance at a glance</h2>
             <p className="mt-1 text-sm text-slate-500">Orders and service outcomes for {rangeLabel}</p>
           </div>
-          <Link to="/" className="inline-flex h-9 items-center gap-2 rounded-md bg-slate-900 px-3 text-sm font-medium text-white transition hover:bg-slate-800">
-            <PackageCheck className="h-4 w-4" />
-            Open order board
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={refresh}
+              disabled={loading || invalidRange || !storeId}
+              title="Refresh dashboard"
+              aria-label="Refresh dashboard"
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <Link to="/" className="inline-flex h-9 items-center gap-2 rounded-md bg-slate-900 px-3 text-sm font-medium text-white transition hover:bg-slate-800">
+              <PackageCheck className="h-4 w-4" />
+              Open order board
+            </Link>
+          </div>
         </section>
 
         <section className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4">
@@ -295,6 +308,45 @@ export default function DashboardPage() {
               </div>
             ) : (
               <>
+                <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
+                    <div>
+                      <h2 className="text-base font-semibold text-slate-900">Recent orders</h2>
+                      <p className="mt-1 text-xs text-slate-500">Latest orders created during this reporting period</p>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 text-xs text-slate-500"><Activity className="h-3.5 w-3.5" /> {metrics.recentOrders.length} shown</span>
+                  </div>
+                  {metrics.recentOrders.length ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[600px] text-left text-sm">
+                        <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                          <tr>
+                            <th className="px-5 py-3 font-medium">Order</th>
+                            <th className="px-5 py-3 font-medium">Created</th>
+                            <th className="px-5 py-3 font-medium">Status</th>
+                            <th className="px-5 py-3 text-right font-medium">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {metrics.recentOrders.map((order) => {
+                            const stage = order.status?.status_code || 'queue';
+                            return (
+                              <tr key={order.order_id} className="text-slate-700">
+                                <td className="px-5 py-3.5 font-semibold text-slate-900">#{order.order_number}</td>
+                                <td className="px-5 py-3.5 text-slate-500">{new Date(order.created_at).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' })}</td>
+                                <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${stageStyles[stage] || stageStyles.queue}`}>{order.status?.status_name || stage}</span></td>
+                                <td className="px-5 py-3.5 text-right font-medium tabular-nums">{formatCurrency(Number(order.total_amount) || 0)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="px-5 py-10 text-center text-sm text-slate-500">No orders in this date range.</p>
+                  )}
+                </section>
+
                 <section className="grid min-w-0 gap-4 xl:grid-cols-[1.55fr_1fr]">
                   <ChartPanel title="Sales by day" caption="Net sales from orders created in the selected period">
                     {metrics.dailySales.length ? (
@@ -377,44 +429,6 @@ export default function DashboardPage() {
                   </ChartPanel>
                 </section>
 
-                <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
-                    <div>
-                      <h2 className="text-base font-semibold text-slate-900">Recent orders</h2>
-                      <p className="mt-1 text-xs text-slate-500">Latest orders created during this reporting period</p>
-                    </div>
-                    <span className="inline-flex items-center gap-1.5 text-xs text-slate-500"><Activity className="h-3.5 w-3.5" /> {metrics.recentOrders.length} shown</span>
-                  </div>
-                  {metrics.recentOrders.length ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[600px] text-left text-sm">
-                        <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                          <tr>
-                            <th className="px-5 py-3 font-medium">Order</th>
-                            <th className="px-5 py-3 font-medium">Created</th>
-                            <th className="px-5 py-3 font-medium">Status</th>
-                            <th className="px-5 py-3 text-right font-medium">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {metrics.recentOrders.map((order) => {
-                            const stage = order.status?.status_code || 'queue';
-                            return (
-                              <tr key={order.order_id} className="text-slate-700">
-                                <td className="px-5 py-3.5 font-semibold text-slate-900">#{order.order_number}</td>
-                                <td className="px-5 py-3.5 text-slate-500">{new Date(order.created_at).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' })}</td>
-                                <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${stageStyles[stage] || stageStyles.queue}`}>{order.status?.status_name || stage}</span></td>
-                                <td className="px-5 py-3.5 text-right font-medium tabular-nums">{formatCurrency(Number(order.total_amount) || 0)}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="px-5 py-10 text-center text-sm text-slate-500">No orders in this date range.</p>
-                  )}
-                </section>
               </>
             )}
           </>
