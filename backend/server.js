@@ -287,6 +287,48 @@ app.post('/api/order-status/ensure-defaults', verifyAuth, async (req, res) => {
     }
 });
 
+app.get('/api/dashboard/stores', verifyAuth, async (req, res) => {
+    try {
+        const { data: profiles, error: profileError } = await supabaseAdmin
+            .from('profile')
+            .select('store_id, role')
+            .eq('auth_user_id', req.user.id);
+
+        if (profileError) throw profileError;
+
+        if (!profiles?.some((profile) => profile.role?.toLowerCase() === 'owner')) {
+            return res.status(403).json({ error: 'Owner access is required' });
+        }
+
+        const storeIds = [...new Set(profiles.map((profile) => profile.store_id).filter(Boolean))];
+        if (storeIds.length === 0) {
+            return res.json({ stores: [] });
+        }
+
+        const { data: stores, error: storeError } = await supabaseAdmin
+            .from('store')
+            .select('store_id, store_name')
+            .in('store_id', storeIds);
+
+        if (storeError) throw storeError;
+
+        logEvent('info', 'dashboard.stores.loaded', {
+            requestId: req.requestId,
+            userId: req.user.id,
+            storeCount: stores?.length || 0,
+        });
+        res.json({ stores: stores || [] });
+    } catch (error) {
+        logEvent('error', 'dashboard.stores.load_failed', {
+            requestId: req.requestId,
+            userId: req.user.id,
+            errorCode: error.code,
+            errorType: error.name,
+        });
+        res.status(500).json({ error: 'Unable to load store names' });
+    }
+});
+
 
 /*
  * Start the server and listen on the specified port.

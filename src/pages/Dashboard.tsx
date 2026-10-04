@@ -31,6 +31,7 @@ import {
 } from 'recharts';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { apiUrl } from '@/lib/api';
 import type { OrderStage } from '@/types/order';
 
 type Period = 'today' | '7d' | 'month' | 'custom';
@@ -121,6 +122,43 @@ export default function DashboardPage() {
   const [period, setPeriod] = useState<Period>('today');
   const [customStart, setCustomStart] = useState(today);
   const [customEnd, setCustomEnd] = useState(today);
+  const [storeNames, setStoreNames] = useState<Record<string, string>>({});
+  const [storeNameError, setStoreNameError] = useState<string | null>(null);
+  const storeIdsKey = user?.availableStores.map((store) => store.store_id).filter(Boolean).join(',') ?? '';
+
+  useEffect(() => {
+    const storeIds = storeIdsKey ? storeIdsKey.split(',') : [];
+    if (!storeIds.length || !user?.accessToken) {
+      setStoreNames({});
+      setStoreNameError(null);
+      return;
+    }
+
+    let active = true;
+    setStoreNames({});
+    setStoreNameError(null);
+
+    void (async () => {
+      try {
+        const response = await fetch(apiUrl('/api/dashboard/stores'), {
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        });
+        const result = await response.json() as {
+          stores?: Array<{ store_id: string; store_name: string }>;
+          error?: string;
+        };
+
+        if (!response.ok) throw new Error(result.error || 'Unable to load store names.');
+        if (!active) return;
+        setStoreNames(Object.fromEntries((result.stores || []).map((store) => [store.store_id, store.store_name])));
+      } catch (error) {
+        if (!active) return;
+        setStoreNameError(error instanceof Error ? error.message : 'Unable to load store names.');
+      }
+    })();
+
+    return () => { active = false; };
+  }, [storeIdsKey, user?.accessToken]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/', { replace: true });
@@ -196,7 +234,9 @@ export default function DashboardPage() {
             >
               <option value="" disabled>Select a store</option>
               {user?.availableStores.map((store) => (
-                <option key={store.store_id} value={store.store_id}>{store.store_name}</option>
+                <option key={store.store_id} value={store.store_id}>
+                  {storeNames[store.store_id] || store.store_name}
+                </option>
               ))}
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4 text-slate-400" />
@@ -205,9 +245,16 @@ export default function DashboardPage() {
       </header>
 
       <div className="mx-auto max-w-[1440px] space-y-5 px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+        {storeNameError && (
+          <div role="status" className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {storeNameError} Showing available profile names instead.
+          </div>
+        )}
         <section className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-emerald-800">{activeStore?.store_name ?? 'Store overview'}</p>
+            <p className="text-sm font-medium text-emerald-800">
+              {activeStore ? storeNames[activeStore.store_id] || activeStore.store_name : 'Store overview'}
+            </p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Performance at a glance</h2>
             <p className="mt-1 text-sm text-slate-500">Orders and service outcomes for {rangeLabel}</p>
           </div>
