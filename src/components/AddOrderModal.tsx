@@ -1,6 +1,7 @@
 
 import { useAppContext } from '@/contexts/AppContext';
 import { useOrders } from '@/hooks/useOrders';
+import { sendServerEvent } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { Plus, Hash, X, Phone } from 'lucide-react';
 import React from 'react';
@@ -87,6 +88,11 @@ export const AddOrderModal: React.FC<AddOrderModalProps> = ({ isOpen, onClose, o
       }
 
       if (data) {
+        void sendServerEvent(session.access_token, 'order.created', {
+          orderId: data.id,
+          orderNumber: generatedOrderNumber,
+          storeId: storeId ?? undefined,
+        });
         await onOrderCreated?.();
 
         // Reset form and close

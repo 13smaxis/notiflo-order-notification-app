@@ -14,10 +14,11 @@ import
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle, Clock, Flame, ShoppingBag } from 'lucide-react';
 import { OrderCard } from './OrderCard';
 import { Order, OrderStage, STAGES } from '@/types/order';
+import { ServerEventMetadata, ServerEventName } from '@/lib/api';
 
 /*
  * These are the properties that the KanbanBoard component expects to receive from its parent component.
@@ -28,7 +29,8 @@ import { Order, OrderStage, STAGES } from '@/types/order';
 interface KanbanBoardProps 
 {
   orders: Order[];
-  onMoveOrder: (orderId: string, newStage: OrderStage) => void;
+  onMoveOrder: (orderId: string, newStage: OrderStage, details: { fromStage: OrderStage; durationMs: number }) => void;
+  onBoardEvent: (eventType: ServerEventName, metadata: ServerEventMetadata) => void;
   loading: boolean;
 }
 
@@ -172,11 +174,13 @@ const DraggableOrderCard: React.FC<{ order: Order; isDragging: boolean }> = ({ o
  * It takes in an array of orders, a callback function for moving orders, and a loading state.
  * The component uses the DndContext from @dnd-kit/core to manage drag-and-drop functionality across the entire board.
  */
-export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, loading }) => {
+export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, onBoardEvent, loading }) => {
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [activeOrderStage, setActiveOrderStage] = useState<OrderStage | null>(null);
   const [overStageId, setOverStageId] = useState<OrderStage | null>(null);
   const [visibleCollectedOrders, setVisibleCollectedOrders] = useState<Set<string>>(new Set());
+  const dragStartedAt = useRef<number | null>(null);
+  const lastOverStage = useRef<OrderStage | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { 
       activationConstraint: { 
@@ -237,15 +241,33 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
       setActiveOrderId(orderId);
       const order = orders.find((o) => o.id === orderId);
       setActiveOrderStage(order?.stage ?? null);
+      dragStartedAt.current = Date.now();
+      lastOverStage.current = order?.stage ?? null;
+      if (order) {
+        onBoardEvent('kanban.order.drag_started', {
+          orderId,
+          fromStage: order.stage,
+        });
+      }
     },
-    [orders]
+    [onBoardEvent, orders]
   );
 
   const handleDragOver = useCallback(
     ({ over }: DragOverEvent) => {
-      setOverStageId(getStageIdFromDragId(over?.id as string | null));
+      const destinationStage = getStageIdFromDragId(over?.id as string | null);
+      setOverStageId(destinationStage);
+
+      if (activeOrderId && activeOrderStage && destinationStage && lastOverStage.current !== destinationStage) {
+        lastOverStage.current = destinationStage;
+        onBoardEvent('kanban.order.dragged_over_stage', {
+          orderId: activeOrderId,
+          fromStage: activeOrderStage,
+          toStage: destinationStage,
+        });
+      }
     },
-    [getStageIdFromDragId]
+    [activeOrderId, activeOrderStage, getStageIdFromDragId, onBoardEvent]
   );
 
   const handleDragEnd = useCallback(
@@ -253,21 +275,42 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onMoveOrder, l
       const destinationStage = getStageIdFromDragId(over?.id as string | null);
       if (activeOrderId && destinationStage && activeOrderStage && destinationStage !== activeOrderStage)                         //- Checks if the order is being moved to a different stage
       {
-        onMoveOrder(activeOrderId, destinationStage);
+        onMoveOrder(activeOrderId, destinationStage, {
+          fromStage: activeOrderStage,
+          durationMs: Date.now() - (dragStartedAt.current ?? Date.now()),
+        });
+      } else if (activeOrderId && activeOrderStage) {
+        onBoardEvent('kanban.order.drop_ignored', {
+          orderId: activeOrderId,
+          fromStage: activeOrderStage,
+          toStage: destinationStage ?? undefined,
+          durationMs: Date.now() - (dragStartedAt.current ?? Date.now()),
+        });
       }
 
       setActiveOrderId(null);
       setActiveOrderStage(null);
       setOverStageId(null);
+      dragStartedAt.current = null;
+      lastOverStage.current = null;
     },
-    [activeOrderId, activeOrderStage, getStageIdFromDragId, onMoveOrder]
+    [activeOrderId, activeOrderStage, getStageIdFromDragId, onBoardEvent, onMoveOrder]
   );
 
   const handleDragCancel = useCallback(() => {
+    if (activeOrderId && activeOrderStage) {
+      onBoardEvent('kanban.order.drag_cancelled', {
+        orderId: activeOrderId,
+        fromStage: activeOrderStage,
+        durationMs: Date.now() - (dragStartedAt.current ?? Date.now()),
+      });
+    }
     setActiveOrderId(null);
     setActiveOrderStage(null);
     setOverStageId(null);
-  }, []);
+    dragStartedAt.current = null;
+    lastOverStage.current = null;
+  }, [activeOrderId, activeOrderStage, onBoardEvent]);
 
   const ordersByStage = STAGES.reduce((acc, stage) => {
     let stageOrders = orders.filter((order) => order.stage === stage.id);

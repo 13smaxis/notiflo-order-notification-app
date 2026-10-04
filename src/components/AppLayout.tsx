@@ -6,6 +6,7 @@ import { useOrders } from '@/hooks/useOrdersAdapter';                           
 import { useAuth } from '@/hooks/useAuth';                                                                                        //-Custom hook to manage authentication
 import { OrderStage, STAGES } from '@/types/order';                                                                               //-Order stages and metadata
 import { useNavigate } from 'react-router-dom';
+import { sendServerEvent, ServerEventMetadata, ServerEventName } from '@/lib/api';
 import Header from './Header';
 import { KanbanBoard } from './KanbanBoard';                                                                                      //-Kanban board component to display orders in stages
 import { AddOrderModal } from './AddOrderModal';
@@ -184,7 +185,11 @@ export const AppLayout: React.FC = () => {
    * Handles moving an order to a new stage.
    * If user is not authenticated, opens login modal instead.
    */
-  const handleMoveOrder = async (orderId: string, newStage: OrderStage) => {
+  const handleMoveOrder = async (
+    orderId: string,
+    newStage: OrderStage,
+    details: { fromStage: OrderStage; durationMs: number }
+  ) => {
     if (!isAuthenticated) {
       setAuthModalMode('login');
       setAuthModalOpen(true);
@@ -229,6 +234,14 @@ export const AppLayout: React.FC = () => {
       return;
     }
 
+    void sendServerEvent(user?.accessToken, 'kanban.order.moved', {
+      orderId,
+      storeId: user?.selectedStoreId ?? undefined,
+      fromStage: details.fromStage,
+      toStage: newStage,
+      durationMs: details.durationMs,
+    });
+
     if (newStage !== 'collected') {
       setPendingCollectedAt((currentPending) => {
         if (!currentPending[orderId]) {
@@ -264,6 +277,13 @@ export const AppLayout: React.FC = () => {
         type: 'success'
       });
     }
+  };
+
+  const handleBoardEvent = (eventType: ServerEventName, metadata: ServerEventMetadata) => {
+    void sendServerEvent(user?.accessToken, eventType, {
+      ...metadata,
+      storeId: user?.selectedStoreId ?? undefined,
+    });
   };
 
   /** 
@@ -461,6 +481,7 @@ export const AppLayout: React.FC = () => {
               <KanbanBoard
                 orders={displayOrders}
                 onMoveOrder={handleMoveOrder}
+                onBoardEvent={handleBoardEvent}
                 loading={loading}
               />                                                                                                {/* Calls the Kanban Board Component */}
             </div>

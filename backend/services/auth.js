@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { logEvent } from './logger.js';
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
@@ -13,7 +14,7 @@ const supabaseAdmin = createClient(
  * @param {string} phone - Phone number (0XXXXXXXXX format)
  * @returns {Promise<{userId: string, stores: Array}>}
  */
-export const lookupPhoneNumber = async (phone) => {
+export const lookupPhoneNumber = async (phone, { requestId } = {}) => {
   try {
     if (!phone || typeof phone !== 'string') {
       throw new Error('Invalid phone number');
@@ -25,7 +26,7 @@ export const lookupPhoneNumber = async (phone) => {
     }
 
     // Step 1: Search for user by phone in auth metadata
-    console.log(`🔍 Looking up phone: ${normalizedPhone}`);
+    logEvent('info', 'auth.phone_lookup.started', { requestId });
 
     const { data, error: listError } = await supabaseAdmin.auth.admin.listUsers();
 
@@ -47,6 +48,7 @@ export const lookupPhoneNumber = async (phone) => {
     });
 
     if (!matchingUser) {
+      logEvent('info', 'auth.phone_lookup.user_not_found', { requestId });
       return {
         found: false,
         message: 'Phone number not found',
@@ -64,6 +66,10 @@ export const lookupPhoneNumber = async (phone) => {
     }
 
     if (!profiles || profiles.length === 0) {
+      logEvent('info', 'auth.phone_lookup.no_stores', {
+        requestId,
+        userId: matchingUser.id,
+      });
       return {
         found: false,
         message: 'No stores found for this phone number',
@@ -81,8 +87,11 @@ export const lookupPhoneNumber = async (phone) => {
       throw new Error(`Store lookup failed: ${storeError.message}`);
     }
 
-    console.log('🔍 Raw profiles:', JSON.stringify(profiles, null, 2));
-    console.log(`✅ Found user ${matchingUser.id} with ${profiles.length} store(s)`);
+    logEvent('info', 'auth.phone_lookup.stores_loaded', {
+      requestId,
+      userId: matchingUser.id,
+      storeCount: profiles.length,
+    });
 
     return {
       found: true,
@@ -100,7 +109,11 @@ export const lookupPhoneNumber = async (phone) => {
       }),
     };
   } catch (error) {
-    console.error('❌ Phone lookup error:', error.message);
+    logEvent('error', 'auth.phone_lookup.failed', {
+      requestId,
+      errorCode: error.code,
+      errorType: error.name,
+    });
     throw error;
   }
 };
@@ -113,7 +126,7 @@ export const lookupPhoneNumber = async (phone) => {
  * @param {string} password - Password
  * @returns {Promise<{success: boolean, session: Object}>}
  */
-export const verifyPassword = async (phone, password) => {
+export const verifyPassword = async (phone, password, { requestId } = {}) => {
   try {
     if (!phone || !password) {
       throw new Error('Phone and password are required');
@@ -122,7 +135,7 @@ export const verifyPassword = async (phone, password) => {
     const normalizedPhone = phone.replace(/[\s\-()]/g, '').trim();
     const email = `${normalizedPhone}@phone.notiflo.local`;
 
-    console.log(`🔐 Verifying password for ${normalizedPhone}`);
+    logEvent('info', 'auth.password_verification.started', { requestId });
 
     // Attempt login
     const { data, error } = await supabaseAdmin.auth.signInWithPassword({
@@ -131,7 +144,10 @@ export const verifyPassword = async (phone, password) => {
     });
 
     if (error) {
-      console.log(`❌ Password verification failed: ${error.message}`);
+      logEvent('warn', 'auth.password_verification.rejected', {
+        requestId,
+        errorCode: error.code,
+      });
       return {
         success: false,
         error: 'Invalid password',
@@ -142,7 +158,10 @@ export const verifyPassword = async (phone, password) => {
       throw new Error('No session returned from auth');
     }
 
-    console.log(`✅ Password verified for user ${data.user.id}`);
+    logEvent('info', 'auth.password_verification.completed', {
+      requestId,
+      userId: data.user.id,
+    });
 
     return {
       success: true,
@@ -158,7 +177,11 @@ export const verifyPassword = async (phone, password) => {
       },
     };
   } catch (error) {
-    console.error('❌ Password verification error:', error.message);
+    logEvent('error', 'auth.password_verification.failed', {
+      requestId,
+      errorCode: error.code,
+      errorType: error.name,
+    });
     throw error;
   }
 };
@@ -171,13 +194,13 @@ export const verifyPassword = async (phone, password) => {
  * @param {string} storeId - Selected store ID
  * @returns {Promise<{success: boolean, profile: Object}>}
  */
-export const selectStore = async (userId, storeId) => {
+export const selectStore = async (userId, storeId, { requestId } = {}) => {
   try {
     if (!userId || !storeId) {
       throw new Error('User ID and Store ID are required');
     }
 
-    console.log(`🏪 Selecting store ${storeId} for user ${userId}`);
+    logEvent('info', 'auth.store_selection.started', { requestId, userId, storeId });
 
     // Get profile for this user + store combination
     const { data: profile, error } = await supabaseAdmin
@@ -201,7 +224,7 @@ export const selectStore = async (userId, storeId) => {
       throw new Error('Store not found for this user');
     }
 
-    console.log(`✅ Store selected: ${profile.store?.store_name}`);
+    logEvent('info', 'auth.store_selection.completed', { requestId, userId, storeId });
 
     return {
       success: true,
@@ -215,7 +238,13 @@ export const selectStore = async (userId, storeId) => {
       },
     };
   } catch (error) {
-    console.error('❌ Store selection error:', error.message);
+    logEvent('error', 'auth.store_selection.failed', {
+      requestId,
+      userId,
+      storeId,
+      errorCode: error.code,
+      errorType: error.name,
+    });
     throw error;
   }
 };

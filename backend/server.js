@@ -25,9 +25,14 @@ import { createClient } from '@supabase/supabase-js';
 import { processPendingWhatsAppNotifications } from './services/whatsapp.js';
 import { processPendingSMSNotifications } from './services/sms.js';
 import { lookupPhoneNumber, verifyPassword, selectStore } from './services/auth.js';
+import { logEvent } from './services/logger.js';
+import { requestLogger } from './services/request-logger.js';
+import { normalizeClientEvent } from './services/client-events.js';
 
 dotenv.config();
 const app = express();
+
+app.use(requestLogger);
 
 // CORS configuration for both local and production
 const frontendOrigin = (
@@ -64,6 +69,10 @@ app.get('/health', async (req, res) => {
             .single();                                                                                                            //- .single() ensures we get a single row, which is useful for health checks.
 
         if (error) {
+            logEvent('error', 'health.check.failed', {
+                requestId: req.requestId,
+                errorCode: error.code,
+            });
             return res.status(500).json({
                 status: 'error',
                 message: 'Supabase connection failed',
@@ -71,6 +80,10 @@ app.get('/health', async (req, res) => {
             });                                                                                                                   //- If there's an error connecting to Supabase, return a 500 status
         }
 
+        logEvent('info', 'health.check.completed', {
+            requestId: req.requestId,
+            supabaseConnected: true,
+        });
         res.json({
             status: 'ok',
             message: 'Server is running',
@@ -79,6 +92,10 @@ app.get('/health', async (req, res) => {
         });                                                                                                                       // - Else return server is running and Supabase is connected, along with a timestamp.
 
     } catch (err) {
+        logEvent('error', 'health.check.failed', {
+            requestId: req.requestId,
+            errorCode: err.code,
+        });
         res.status(500).json({
             status: 'error',
             message: 'Health check failed',
@@ -110,15 +127,27 @@ app.get('/notifications/pending', async (req, res) => {
             .order('created_at', { ascending: true });                                                                            //- Order the results by creation date in ascending order to process older notifications first
 
         if (error) {
+            logEvent('error', 'notifications.pending_lookup.failed', {
+                requestId: req.requestId,
+                errorCode: error.code,
+            });
             return res.status(500).json({ error: error.message });                                                                //- If there's an error fetching pending notifications, return a 500 status
         }
 
+        logEvent('info', 'notifications.pending_lookup.completed', {
+            requestId: req.requestId,
+            count: data.length,
+        });
         res.json({
             count: data.length,
             notifications: data
         });                                                                                                                       //- Else return the count of pending notifications and the notification data itself in JSON format
 
     } catch (err) {
+        logEvent('error', 'notifications.pending_lookup.failed', {
+            requestId: req.requestId,
+            errorCode: err.code,
+        });
         res.status(500).json({ error: err.message });
     }
 });
@@ -130,44 +159,47 @@ app.get('/notifications/pending', async (req, res) => {
  */
 
 const startWhatsAppPoller = () => {
-    console.log('📱 Starting WhatsApp notification poller (every 30 seconds)...');
+    logEvent('info', 'notifications.poller.started', { channel: 'whatsapp', intervalMs: 30000 });
 
     setInterval(async () => {
         try {
             const results = await processPendingWhatsAppNotifications(supabaseAdmin);
-
-            if (results.processed > 0) {
-                console.log(`
-📊 WhatsApp Poller Results:
-   Processed: ${results.processed}
-   Sent: ${results.sent}
-   Failed: ${results.failed}
-        `);
-            }
+            logEvent(results.errors.length ? 'warn' : 'info', 'notifications.poller.completed', {
+                channel: 'whatsapp',
+                processed: results.processed,
+                sent: results.sent,
+                failed: results.failed,
+                fallbacksCreated: results.fallbacks_created,
+                errorCount: results.errors.length,
+            });
         } catch (error) {
-            console.error('❌ WhatsApp Poller error:', error.message);
+            logEvent('error', 'notifications.poller.failed', {
+                channel: 'whatsapp',
+                errorCode: error.code,
+            });
         }
     }, 30000); // 30 seconds
 };
 
 
 const startSMSPoller = () => {
-    console.log('💬 Starting SMS notification poller (every 30 seconds)...');
+    logEvent('info', 'notifications.poller.started', { channel: 'sms', intervalMs: 30000 });
 
     setInterval(async () => {
         try {
             const results = await processPendingSMSNotifications(supabaseAdmin);
-
-            if (results.processed > 0) {
-                console.log(`
-📊 SMS Poller Results:
-   Processed: ${results.processed}
-   Sent: ${results.sent}
-   Failed: ${results.failed}
-        `);
-            }
+            logEvent(results.errors.length ? 'warn' : 'info', 'notifications.poller.completed', {
+                channel: 'sms',
+                processed: results.processed,
+                sent: results.sent,
+                failed: results.failed,
+                errorCount: results.errors.length,
+            });
         } catch (error) {
-            console.error('❌ SMS Poller error:', error.message);
+            logEvent('error', 'notifications.poller.failed', {
+                channel: 'sms',
+                errorCode: error.code,
+            });
         }
     }, 30000); // 30 seconds
 };
@@ -183,6 +215,7 @@ const verifyAuth = async (req, res, next) => {
 
         if (!authHeader || !authHeader.startsWith('Bearer '))                                                                     //- Check if the Authorization header is present and starts with 'Bearer '
         {
+            logEvent('warn', 'auth.token.missing', { requestId: req.requestId });
             return res.status(401).json({ error: 'Missing or invalid authorization header' });                                    //- If not, return a 401 Unauthorized status with an error message
         }
 
@@ -190,15 +223,48 @@ const verifyAuth = async (req, res, next) => {
         const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);                                                //- Use Supabase Admin client to verify the token and retrieve the user associated with it
 
         if (error || !user) {
+            logEvent('warn', 'auth.token.invalid', {
+                requestId: req.requestId,
+                errorCode: error?.code,
+            });
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
 
         req.user = user;                                                                                                          //- Attach user to request object
+        logEvent('info', 'auth.token.verified', {
+            requestId: req.requestId,
+            userId: user.id,
+        });
         next();
     } catch (err) {
+        logEvent('error', 'auth.token.verification_failed', {
+            requestId: req.requestId,
+            errorCode: err.code,
+        });
         res.status(401).json({ error: 'Authentication failed', details: err.message });
     }
 };
+
+app.post('/api/events', verifyAuth, (req, res) => {
+    const event = normalizeClientEvent({
+        eventType: req.body?.eventType,
+        metadata: req.body?.metadata,
+        userId: req.user.id,
+    });
+
+    if (!event) {
+        logEvent('warn', 'client_event.rejected', {
+            requestId: req.requestId,
+            userId: req.user.id,
+            reason: 'unsupported_event',
+        });
+        return res.status(400).json({ error: 'Unsupported event' });
+    }
+
+    const { eventType, ...fields } = event;
+    logEvent('info', eventType, { requestId: req.requestId, ...fields });
+    res.status(202).json({ accepted: true });
+});
 
 
 /*
@@ -208,26 +274,11 @@ const verifyAuth = async (req, res, next) => {
 const PORT = process.env.PORT || 3000;                                                                                            //- Use the PORT from environment variables or default to 3000
 
 app.listen(PORT, () => {
-    console.log(`
-                ╔════════════════════════════════════════╗
-                ║   NotiFlo Backend Server Running       ║
-                ║   Port: ${PORT}                              ║
-                ║   Environment: ${process.env.NODE_ENV || 'development'}        ║
-                ║   Supabase: ${process.env.SUPABASE_URL ? '✅ Connected' : '❌ Not configured'}   ║
-                ╚════════════════════════════════════════╝
-                
-                📍 Health Check: http://localhost:${PORT}/health
-                📍 Pending Notifications: http://localhost:${PORT}/notifications/pending
-                📍 Endpoints:
-                                GET  /health                          → Check server status
-                                GET  /notifications/pending           → View pending notifications
-                                POST /notifications/process-whatsapp   → Process pending WhatsApp notifications
-                                POST /notifications/process-sms        → Process pending SMS notifications
-
-                🔄 Auto-Polling:
-                   ✅ WhatsApp (every 30 seconds)
-                   ✅ SMS Fallback (every 30 seconds)
-    `);
+    logEvent('info', 'server.started', {
+        port: PORT,
+        environment: process.env.NODE_ENV || 'development',
+        supabaseConfigured: Boolean(process.env.SUPABASE_URL),
+    });
 
     startWhatsAppPoller();                                                                                                        //- Start the WhatsApp notification poller to process pending notifications every 30 seconds  
     startSMSPoller();                                                                                                             //- Start the SMS notification poller to send SMS fallback messages
@@ -241,11 +292,24 @@ app.listen(PORT, () => {
 app.post('/notifications/process-whatsapp', async (req, res) => {
     try {
         const results = await processPendingWhatsAppNotifications(supabaseAdmin);
+        logEvent('info', 'notifications.manual_processing.completed', {
+            requestId: req.requestId,
+            channel: 'whatsapp',
+            processed: results.processed,
+            sent: results.sent,
+            failed: results.failed,
+            fallbacksCreated: results.fallbacks_created,
+        });
         res.json({
             message: 'WhatsApp notifications processed',
             results
         });
     } catch (error) {
+        logEvent('error', 'notifications.manual_processing.failed', {
+            requestId: req.requestId,
+            channel: 'whatsapp',
+            errorCode: error.code,
+        });
         res.status(500).json({ error: error.message });
     }
 });
@@ -258,11 +322,23 @@ app.post('/notifications/process-whatsapp', async (req, res) => {
 app.post('/notifications/process-sms', async (req, res) => {
     try {
         const results = await processPendingSMSNotifications(supabaseAdmin);
+        logEvent('info', 'notifications.manual_processing.completed', {
+            requestId: req.requestId,
+            channel: 'sms',
+            processed: results.processed,
+            sent: results.sent,
+            failed: results.failed,
+        });
         res.json({
             message: 'SMS notifications processed',
             results
         });
     } catch (error) {
+        logEvent('error', 'notifications.manual_processing.failed', {
+            requestId: req.requestId,
+            channel: 'sms',
+            errorCode: error.code,
+        });
         res.status(500).json({ error: error.message });
     }
 });
@@ -278,6 +354,10 @@ app.post('/api/auth/login-with-phone', async (req, res) => {
         const { phoneNumber, password } = req.body;
 
         if (!phoneNumber || !password) {
+            logEvent('warn', 'auth.phone_login.validation_failed', {
+                requestId: req.requestId,
+                reason: 'required_fields_missing',
+            });
             return res.status(400).json({
                 error: 'Phone number and password are required'
             });
@@ -294,11 +374,19 @@ app.post('/api/auth/login-with-phone', async (req, res) => {
         });
 
         if (error) {
+            logEvent('warn', 'auth.phone_login.rejected', {
+                requestId: req.requestId,
+                errorCode: error.code,
+            });
             return res.status(401).json({
                 error: 'Invalid phone or password'
             });
         }
 
+        logEvent('info', 'auth.phone_login.completed', {
+            requestId: req.requestId,
+            userId: data.user.id,
+        });
         res.json({
             success: true,
             user: data.user,
@@ -311,7 +399,10 @@ app.post('/api/auth/login-with-phone', async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Login error:', err);
+        logEvent('error', 'auth.phone_login.failed', {
+            requestId: req.requestId,
+            errorCode: err.code,
+        });
         res.status(500).json({
             error: 'Login failed',
             details: err.message
@@ -330,6 +421,10 @@ app.post('/api/auth/register', async (req, res) => {
         const { phoneNumber, password, ownerName, ownerSurname, storeName, storeNumber } = req.body;
 
         if (!phoneNumber || !password) {
+            logEvent('warn', 'auth.registration.validation_failed', {
+                requestId: req.requestId,
+                reason: 'required_fields_missing',
+            });
             return res.status(400).json({
                 error: 'Phone number and password are required'
             });
@@ -355,11 +450,19 @@ app.post('/api/auth/register', async (req, res) => {
         });
 
         if (error) {
+            logEvent('warn', 'auth.registration.rejected', {
+                requestId: req.requestId,
+                errorCode: error.code,
+            });
             return res.status(400).json({
                 error: error.message
             });
         }
 
+        logEvent('info', 'auth.registration.completed', {
+            requestId: req.requestId,
+            userId: data.user.id,
+        });
         res.status(201).json({
             success: true,
             user: data.user,
@@ -368,7 +471,10 @@ app.post('/api/auth/register', async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Register error:', err);
+        logEvent('error', 'auth.registration.failed', {
+            requestId: req.requestId,
+            errorCode: err.code,
+        });
         res.status(500).json({
             error: 'Registration failed',
             details: err.message
@@ -384,15 +490,16 @@ app.post('/api/auth/register', async (req, res) => {
  * Body: { storeNumber, storeName, storePhone, role? }
  */
 app.post('/api/add-store', verifyAuth, async (req, res) => {
- console.log('🔍 /api/add-store called');
- console.log('🔍 User:', req.user?.id);
- console.log('🔍 Body:', req.body);
-
     try {
         const { storeNumber, storeName, storePhone, role } = req.body;
 
         if (!storeNumber || !storeName || !storePhone)                                                                            //- Check if required fields are missing
         {
+            logEvent('warn', 'store.creation.validation_failed', {
+                requestId: req.requestId,
+                userId: req.user.id,
+                reason: 'required_fields_missing',
+            });
             return res.status(400).json({
                 error: 'Missing required fields: storeNumber, storeName, storePhone'
             });
@@ -400,6 +507,11 @@ app.post('/api/add-store', verifyAuth, async (req, res) => {
 
         if (!/^[1-9]\d*$/.test(String(storeNumber).trim()))                                                                       //- Validate that storeNumber is a positive integer
         {
+            logEvent('warn', 'store.creation.validation_failed', {
+                requestId: req.requestId,
+                userId: req.user.id,
+                reason: 'invalid_store_number',
+            });
             return res.status(400).json({
                 error: 'Store number must be a positive integer'
             });
@@ -416,12 +528,21 @@ app.post('/api/add-store', verifyAuth, async (req, res) => {
             });                                                                                                                       //- Call the Supabase RPC function to add the store to the authenticated user
 
         if (error) {
-            console.error('❌ Add store error:', error);
+            logEvent('error', 'store.creation.failed', {
+                requestId: req.requestId,
+                userId: req.user.id,
+                errorCode: error.code,
+            });
             return res.status(400).json({
                 error: error.message
             });
         }
 
+        logEvent('info', 'store.creation.completed', {
+            requestId: req.requestId,
+            userId: req.user.id,
+            storeId: data,
+        });
         res.status(201).json({
             success: true,
             message: 'Store added successfully',
@@ -430,7 +551,11 @@ app.post('/api/add-store', verifyAuth, async (req, res) => {
         });
 
     } catch (err) {
-        console.error('❌ Add store request error:', err);
+        logEvent('error', 'store.creation.failed', {
+            requestId: req.requestId,
+            userId: req.user?.id,
+            errorCode: err.code,
+        });
         res.status(500).json({
             error: 'Failed to add store',
             details: err.message
@@ -450,30 +575,43 @@ app.post('/api/auth/lookup-phone', async (req, res) => {
     const { phoneNumber } = req.body;
  
     if (!phoneNumber) {
+            logEvent('warn', 'auth.phone_lookup.validation_failed', {
+                requestId: req.requestId,
+                reason: 'phone_number_missing',
+            });
       return res.status(400).json({
         error: 'Phone number is required',
       });
     }
  
-    console.log(`📱 /api/auth/lookup-phone called with: ${phoneNumber}`);
- 
-    const result = await lookupPhoneNumber(phoneNumber);
+    const result = await lookupPhoneNumber(phoneNumber, { requestId: req.requestId });
  
     if (!result.found) {
+            logEvent('info', 'auth.phone_lookup.not_found', {
+                requestId: req.requestId,
+            });
       return res.status(404).json({
         found: false,
         error: result.message,
       });
     }
  
-    res.json({
+        logEvent('info', 'auth.phone_lookup.completed', {
+            requestId: req.requestId,
+            userId: result.userId,
+            storeCount: result.stores.length,
+        });
+        res.json({
       found: true,
       userId: result.userId,
       phone: result.phone,
       stores: result.stores,
     });
   } catch (error) {
-    console.error('❌ Phone lookup endpoint error:', error.message);
+        logEvent('error', 'auth.phone_lookup.failed', {
+            requestId: req.requestId,
+            errorCode: error.code,
+        });
     res.status(500).json({
       error: 'Phone lookup failed',
       details: error.message,
@@ -493,17 +631,25 @@ app.post('/api/auth/login', async (req, res) => {
     const { phoneNumber, storeId, password } = req.body;
  
     if (!phoneNumber || !storeId || !password) {
+            logEvent('warn', 'auth.login.validation_failed', {
+                requestId: req.requestId,
+                reason: 'required_fields_missing',
+            });
       return res.status(400).json({
         error: 'Phone number, store ID, and password are required',
       });
     }
  
-    console.log(`🔐 /api/auth/login called for phone: ${phoneNumber}`);
+    logEvent('info', 'auth.login.started', { requestId: req.requestId });
  
     // Step 1: Verify password
-    const passwordResult = await verifyPassword(phoneNumber, password);
+    const passwordResult = await verifyPassword(phoneNumber, password, { requestId: req.requestId });
  
     if (!passwordResult.success) {
+            logEvent('warn', 'auth.login.rejected', {
+                requestId: req.requestId,
+                reason: 'password_verification_failed',
+            });
       return res.status(401).json({
         success: false,
         error: passwordResult.error,
@@ -511,17 +657,25 @@ app.post('/api/auth/login', async (req, res) => {
     }
  
     // Step 2: Select store
-    const storeResult = await selectStore(passwordResult.user.id, storeId);
+    const storeResult = await selectStore(passwordResult.user.id, storeId, { requestId: req.requestId });
  
     if (!storeResult.success) {
+            logEvent('warn', 'auth.login.rejected', {
+                requestId: req.requestId,
+                userId: passwordResult.user.id,
+                reason: 'store_selection_failed',
+            });
       return res.status(400).json({
         success: false,
         error: 'Store selection failed',
       });
     }
  
-    console.log(`✅ Login successful for user ${passwordResult.user.id}`);
- 
+        logEvent('info', 'auth.login.completed', {
+            requestId: req.requestId,
+            userId: passwordResult.user.id,
+            storeId: storeResult.profile.storeId,
+        });
     res.json({
       success: true,
       user: passwordResult.user,
@@ -530,7 +684,10 @@ app.post('/api/auth/login', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Login endpoint error:', error.message);
+        logEvent('error', 'auth.login.failed', {
+            requestId: req.requestId,
+            errorCode: error.code,
+        });
     res.status(500).json({
       error: 'Login failed',
       details: error.message,

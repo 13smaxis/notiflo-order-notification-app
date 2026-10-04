@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { sendServerEvent } from '@/lib/api';
 import { Profile, Store } from '@/types/order';
 
 export interface AuthUser {
@@ -328,6 +329,9 @@ export function useAuth() {
       const authUser = buildAuthUser(authData.user, profiles, selectedStoreId, authData.session?.access_token ?? null);
 
       setUser(authUser);
+      void sendServerEvent(authUser.accessToken, 'auth.login.completed', {
+        storeId: selectedStoreId ?? undefined,
+      });
       return { user: authUser, error: null };
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';

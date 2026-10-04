@@ -3,6 +3,7 @@
 
 import twilio from 'twilio';
 import dotenv from 'dotenv';
+import { logEvent } from './logger.js';
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ export const sendSMSMessage = async (customerPhone, message) => {
       return {
         success: false,
         error: 'Invalid phone number format',
+        errorCode: 'INVALID_PHONE',
         timestamp: new Date().toISOString()
       };
     }
@@ -74,6 +76,7 @@ export const sendSMSMessage = async (customerPhone, message) => {
     return {
       success: false,
       error: error.message,
+      errorCode: error.code,
       timestamp: new Date().toISOString()
     };
   }
@@ -119,16 +122,23 @@ export const processPendingSMSNotifications = async (supabase) => {
       .limit(10); // Process 10 at a time
 
     if (fetchError) {
+      logEvent('error', 'notifications.batch.fetch_failed', {
+        channel: 'sms',
+        errorCode: fetchError.code,
+      });
       results.errors.push(`Database fetch error: ${fetchError.message}`);
       return results;
     }
 
     if (!pendingNotifications || pendingNotifications.length === 0) {
-      // Silently return (no SMS to send)
+      logEvent('info', 'notifications.batch.empty', { channel: 'sms' });
       return results;
     }
 
-    console.log(`💬 Processing ${pendingNotifications.length} SMS notifications...`);
+    logEvent('info', 'notifications.batch.started', {
+      channel: 'sms',
+      count: pendingNotifications.length,
+    });
 
     // Step 2: Send each notification
     for (const notification of pendingNotifications) {
@@ -140,7 +150,10 @@ export const processPendingSMSNotifications = async (supabase) => {
         const notificationId = notification.notification_id;
 
         if (!rawPhone) {
-          console.log(`⚠️  SMS Notification ${notificationId}: No customer phone found`);
+          logEvent('warn', 'notifications.delivery.destination_missing', {
+            channel: 'sms',
+            notificationId,
+          });
           results.failed++;
           
           // Update as failed
@@ -158,14 +171,20 @@ export const processPendingSMSNotifications = async (supabase) => {
         }
 
         // Convert phone number to international format
-        const internationalPhone = convertPhoneNumber(rawPhone);
-        console.log(`💬 Sending SMS to ${rawPhone} (converted: ${internationalPhone})`);
+        logEvent('info', 'notifications.delivery.started', {
+          channel: 'sms',
+          notificationId,
+        });
 
         // Send via Twilio
         const sendResult = await sendSMSMessage(rawPhone, message);
 
         if (sendResult.success) {
-          console.log(`✅ SMS sent to ${internationalPhone} (SID: ${sendResult.sid})`);
+          logEvent('info', 'notifications.delivery.succeeded', {
+            channel: 'sms',
+            notificationId,
+            providerSid: sendResult.sid,
+          });
           results.sent++;
 
           // Update notification as sent
@@ -180,7 +199,11 @@ export const processPendingSMSNotifications = async (supabase) => {
             .eq('notification_id', notificationId);
 
         } else {
-          console.log(`❌ SMS failed for ${internationalPhone}: ${sendResult.error}`);
+          logEvent('error', 'notifications.delivery.failed', {
+            channel: 'sms',
+            notificationId,
+            errorCode: sendResult.errorCode,
+          });
           results.failed++;
 
           // Update notification as failed
@@ -198,15 +221,30 @@ export const processPendingSMSNotifications = async (supabase) => {
       } catch (error) {
         results.failed++;
         results.errors.push(`Error processing SMS notification: ${error.message}`);
-        console.error('❌ Error:', error.message);
+        logEvent('error', 'notifications.delivery.failed', {
+          channel: 'sms',
+          notificationId: notification.notification_id,
+          errorCode: error.code,
+          errorType: error.name,
+        });
       }
     }
 
   } catch (error) {
     results.errors.push(`Fatal error: ${error.message}`);
-    console.error('❌ Fatal SMS error:', error.message);
+    logEvent('error', 'notifications.batch.failed', {
+      channel: 'sms',
+      errorCode: error.code,
+      errorType: error.name,
+    });
   }
 
+  logEvent('info', 'notifications.batch.completed', {
+    channel: 'sms',
+    processed: results.processed,
+    sent: results.sent,
+    failed: results.failed,
+  });
   return results;
 };
 
