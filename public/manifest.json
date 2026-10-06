@@ -13,12 +13,6 @@
       "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/favicon.png",
-      "sizes": "any",
-      "type": "image/png",
-      "purpose": "any maskable"
     }
   ],
   "categories": ["business", "productivity"],

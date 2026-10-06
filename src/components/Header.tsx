@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, LayoutDashboard, LogOut, Plus, Search, Store, User, Users } from 'lucide-react';
+import { ChevronDown, LayoutDashboard, LogOut, MapPin, Plus, Search, Store, User, Users } from 'lucide-react';
 import { AuthUser } from '@/hooks/useAuth';
 import {
   DropdownMenu,
@@ -15,6 +15,8 @@ interface HeaderProps {
   onOpenAddOrder: () => void;
   onOpenAddEmployee: () => void;
   onOpenAddStore: () => void;
+  onOpenStoreQr: () => void;
+  onOpenStoreListing: () => void;
   onOpenLogin: () => void;
   onOpenRegister: () => void;
   onOpenDashboard: () => void;
@@ -44,6 +46,8 @@ const Header: React.FC<HeaderProps> = ({
   onOpenAddOrder,
   onOpenAddEmployee,
   onOpenAddStore,
+  onOpenStoreQr,
+  onOpenStoreListing,
   onOpenLogin,
   onOpenRegister,
   onOpenDashboard,
@@ -149,6 +153,18 @@ const Header: React.FC<HeaderProps> = ({
                       Add Store
                     </DropdownMenuItem>
                   )}
+                  {canAddStore && (
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenStoreQr(); }}>
+                      <Store className="mr-2 h-4 w-4" />
+                      Store QR
+                    </DropdownMenuItem>
+                  )}
+                  {canAddStore && (
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenStoreListing(); }}>
+                      <MapPin className="mr-2 h-4 w-4" />
+                      Restaurant listing
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onLogout(); }}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -252,6 +268,18 @@ const Header: React.FC<HeaderProps> = ({
                     <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenAddStore(); }}>
                       <Store className="mr-2 h-4 w-4" />
                       Add Store
+                    </DropdownMenuItem>
+                  )}
+                  {canAddStore && (
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenStoreQr(); }}>
+                      <Store className="mr-2 h-4 w-4" />
+                      Store QR
+                    </DropdownMenuItem>
+                  )}
+                  {canAddStore && (
+                    <DropdownMenuItem onSelect={(event) => { event.preventDefault(); onOpenStoreListing(); }}>
+                      <MapPin className="mr-2 h-4 w-4" />
+                      Restaurant listing
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />

@@ -6,6 +6,7 @@ import { useOrders } from '@/hooks/useOrdersAdapter';                           
 import { useAuth } from '@/hooks/useAuth';                                                                                        //-Custom hook to manage authentication
 import { OrderStage, STAGES } from '@/types/order';                                                                               //-Order stages and metadata
 import { useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import { sendServerEvent, ServerEventMetadata, ServerEventName } from '@/lib/api';
 import Header from './Header';
 import { KanbanBoard } from './KanbanBoard';                                                                                      //-Kanban board component to display orders in stages
@@ -15,7 +16,8 @@ import { AddStoreModal } from './AddStoreModal';
 import SearchModal from './SearchModal';
 import { LoginModal } from './LoginModal';
 import { RegisterModal } from './RegisterModal';
-import { Plus, AlertCircle, RefreshCw, CheckCircle, Store, X } from 'lucide-react';                                                      //-Icons from lucide-react
+import { StoreDiscoveryModal } from './StoreDiscoveryModal';
+import { Plus, AlertCircle, RefreshCw, CheckCircle, Store, X, Download } from 'lucide-react';                                                      //-Icons from lucide-react
 
 /**
  * Defines the component's props/properties.
@@ -70,6 +72,71 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
  * It includes the header, kanban board, modals for adding and searching orders, login modal, toast notifications and footer.
  * The function returns JSX that defines the structure and behavior of the layout.
  */
+const StoreQrModal: React.FC<{
+  isOpen: boolean;
+  store: { store_id: string; store_name: string; store_number: number | string } | null;
+  url: string;
+  onClose: () => void;
+}> = ({ isOpen, store, url, onClose }) => {
+  const svgRef = React.useRef<SVGSVGElement | null>(null);
+
+  if (!isOpen || !store || !url) {
+    return null;
+  }
+
+  const handleDownload = () => {
+    if (!svgRef.current) {
+      return;
+    }
+
+    const serializer = new XMLSerializer();
+    const source = serializer.serializeToString(svgRef.current);
+    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `notiflo-store-${store.store_number}-qr.svg`;
+    link.click();
+    URL.revokeObjectURL(blobUrl);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-700">Store QR</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900">{store.store_name}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full bg-slate-100 p-2 text-slate-600 hover:bg-slate-200">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-6 flex justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <QRCodeSVG ref={svgRef} value={url} size={220} bgColor="#ffffff" fgColor="#0f172a" includeMargin />
+        </div>
+
+        <div className="mt-5 rounded-xl bg-amber-50 p-3 text-center text-xs text-slate-700">
+          <p className="font-semibold text-slate-900">Store link</p>
+          <p className="mt-1 break-all">{url}</p>
+        </div>
+
+        <div className="mt-5 flex gap-3">
+          <button type="button" onClick={handleDownload} className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800">
+            <Download className="h-4 w-4" />
+            Download QR
+          </button>
+          <a href={url} target="_blank" rel="noreferrer" className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+            Open link
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const AppLayout: React.FC = () => {
   //Contexts
   const { sidebarOpen, toggleSidebar, setUser } = useAppContext();                                             //-Pulls sidebar state, toggle function, and auth sync setter from app context
@@ -84,6 +151,8 @@ export const AppLayout: React.FC = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);                                                //-Controls visibility of login prompt banner
   const [addEmployeeModalOpen, setAddEmployeeModalOpen] = useState(false);                                      //-Controls visibility of the add employee modal
   const [addStoreModalOpen, setAddStoreModalOpen] = useState(false);                                            //-Controls visibility of the add store modal
+  const [storeQrModalOpen, setStoreQrModalOpen] = useState(false);                                              //-Controls visibility of the selected store QR modal
+  const [storeDiscoveryModalOpen, setStoreDiscoveryModalOpen] = useState(false);
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);     //-Controls data passed to toast notifications
   const [pendingOrderStages, setPendingOrderStages] = useState<Partial<Record<string, OrderStage>>>({});        //-Keeps moved cards visible in their dropped stage until remote data catches up
@@ -164,6 +233,9 @@ export const AppLayout: React.FC = () => {
   }, [statsNow]);
 
   const availableStores = user?.availableStores ?? [];
+  const selectedStore = user?.availableStores.find((store) => store.store_id === user.selectedStoreId) ?? user?.availableStores[0] ?? null;
+  const customerAppUrl = (import.meta.env.VITE_CUSTOMER_APP_URL || 'https://notiflo.app').replace(/\/+$/, '');
+  const selectedStoreQrUrl = selectedStore ? `${customerAppUrl}/store/${encodeURIComponent(selectedStore.store_id)}` : '';
   const needsStoreSelection = isAuthenticated && availableStores.length > 1 && !user?.selectedStoreId;
 
   /**
@@ -352,6 +424,23 @@ export const AppLayout: React.FC = () => {
     setAddStoreModalOpen(true);
   };
 
+  const handleOpenStoreQr = () => {
+    if (!selectedStore) {
+      setToast({ message: 'Select a store first to generate its QR code.', type: 'info' });
+      return;
+    }
+
+    setStoreQrModalOpen(true);
+  };
+
+  const handleOpenStoreListing = () => {
+    if (!selectedStore) {
+      setToast({ message: 'Select a store first to edit its restaurant listing.', type: 'info' });
+      return;
+    }
+    setStoreDiscoveryModalOpen(true);
+  };
+
   const handleOpenDashboard = () => {
     navigate('/dashboard');
   };
@@ -409,6 +498,8 @@ export const AppLayout: React.FC = () => {
           onOpenAddOrder={handleOpenAddOrder}
           onOpenAddEmployee={handleOpenAddEmployee}
           onOpenAddStore={handleOpenAddStore}
+          onOpenStoreQr={handleOpenStoreQr}
+          onOpenStoreListing={handleOpenStoreListing}
           onOpenLogin={handleOpenLogin}
           onOpenRegister={handleOpenRegister}
           onOpenDashboard={handleOpenDashboard}
@@ -640,6 +731,21 @@ export const AppLayout: React.FC = () => {
       <AddStoreModal
         isOpen={addStoreModalOpen}
         onClose={() => setAddStoreModalOpen(false)}
+      />
+
+      <StoreQrModal
+        isOpen={storeQrModalOpen}
+        store={selectedStore}
+        url={selectedStoreQrUrl}
+        onClose={() => setStoreQrModalOpen(false)}
+      />
+
+      <StoreDiscoveryModal
+        isOpen={storeDiscoveryModalOpen}
+        store={selectedStore}
+        accessToken={user?.accessToken}
+        onClose={() => setStoreDiscoveryModalOpen(false)}
+        onSaved={() => setToast({ message: 'Restaurant listing updated.', type: 'success' })}
       />
 
       {needsStoreSelection && (

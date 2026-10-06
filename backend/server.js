@@ -626,6 +626,88 @@ app.post('/api/add-store', verifyAuth, async (req, res) => {
     }
 });
 
+app.get('/api/stores/:storeId/discovery', verifyAuth, async (req, res) => {
+    try {
+        const { data: profiles, error: profileError } = await supabaseAdmin
+            .from('profile')
+            .select('store_id, role')
+            .eq('auth_user_id', req.user.id)
+            .eq('store_id', req.params.storeId);
+
+        if (profileError) throw profileError;
+        if (!profiles?.some((profile) => profile.role?.toLowerCase() === 'owner')) {
+            return res.status(403).json({ error: 'Owner access to this store is required' });
+        }
+
+        const { data: store, error: storeError } = await supabaseAdmin
+            .from('store')
+            .select('store_id, cuisine, estimated_delivery_minutes, latitude, longitude')
+            .eq('store_id', req.params.storeId)
+            .maybeSingle();
+
+        if (storeError) throw storeError;
+        if (!store) return res.status(404).json({ error: 'Store not found' });
+        res.json({ store });
+    } catch (error) {
+        logEvent('error', 'store.discovery.load_failed', {
+            requestId: req.requestId,
+            userId: req.user.id,
+            errorCode: error.code,
+        });
+        res.status(500).json({ error: 'Unable to load restaurant listing details' });
+    }
+});
+
+app.put('/api/stores/:storeId/discovery', verifyAuth, async (req, res) => {
+    try {
+        const { cuisine, estimatedDeliveryMinutes, latitude, longitude } = req.body || {};
+        const validOptionalNumber = (value) => value === null || (typeof value === 'number' && Number.isFinite(value));
+        if (typeof cuisine !== 'string' || cuisine.trim().length > 80
+            || !validOptionalNumber(estimatedDeliveryMinutes)
+            || !validOptionalNumber(latitude)
+            || !validOptionalNumber(longitude)
+            || (estimatedDeliveryMinutes !== null && (estimatedDeliveryMinutes < 1 || estimatedDeliveryMinutes > 240 || !Number.isInteger(estimatedDeliveryMinutes)))
+            || ((latitude === null) !== (longitude === null))
+            || (latitude !== null && (latitude < -90 || latitude > 90))
+            || (longitude !== null && (longitude < -180 || longitude > 180))) {
+            return res.status(400).json({ error: 'Enter valid cuisine, delivery estimate, and paired coordinates.' });
+        }
+
+        const { data: profiles, error: profileError } = await supabaseAdmin
+            .from('profile')
+            .select('store_id, role')
+            .eq('auth_user_id', req.user.id)
+            .eq('store_id', req.params.storeId);
+
+        if (profileError) throw profileError;
+        if (!profiles?.some((profile) => profile.role?.toLowerCase() === 'owner')) {
+            return res.status(403).json({ error: 'Owner access to this store is required' });
+        }
+
+        const { data: store, error: storeError } = await supabaseAdmin
+            .from('store')
+            .update({
+                cuisine: cuisine.trim() || null,
+                estimated_delivery_minutes: estimatedDeliveryMinutes,
+                latitude,
+                longitude,
+            })
+            .eq('store_id', req.params.storeId)
+            .select('store_id, cuisine, estimated_delivery_minutes, latitude, longitude')
+            .single();
+
+        if (storeError) throw storeError;
+        res.json({ store });
+    } catch (error) {
+        logEvent('error', 'store.discovery.update_failed', {
+            requestId: req.requestId,
+            userId: req.user.id,
+            errorCode: error.code,
+        });
+        res.status(500).json({ error: 'Unable to save restaurant listing details' });
+    }
+});
+
 
 /*
  * STEP 1: Look up phone number and return available stores
