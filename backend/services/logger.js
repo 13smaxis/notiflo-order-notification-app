@@ -31,12 +31,13 @@ export const serializeLogEntry = (level, event, fields = {}) => JSON.stringify({
 
 export const logEvent = (level, event, fields = {}) => {
   const serializedEntry = serializeLogEntry(level, event, fields);
+  const logLine = `[${level.toUpperCase()}] ${serializedEntry}`;
 
   if (level === 'error') {
-    console.error(serializedEntry);
+    console.error(logLine);
   } else if (level === 'warn') {
-    console.warn(serializedEntry);
+    console.warn(logLine);
   } else {
-    console.log(serializedEntry);
+    console.log(logLine);
   }
 };

@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import test from 'node:test';
-import { serializeLogEntry } from '../services/logger.js';
+import { logEvent, serializeLogEntry } from '../services/logger.js';
 import { requestLogger } from '../services/request-logger.js';
+
+const parseLogLine = (line) => JSON.parse(line.slice(line.indexOf(' ') + 1));
 
 test('serializes structured log entries with a timestamp and event metadata', () => {
   const entry = JSON.parse(serializeLogEntry('info', 'http.request.completed', {
@@ -45,6 +47,33 @@ test('omits sensitive fields recursively and prevents metadata from overriding c
   assert.doesNotMatch(serialized, /27600000000|not-a-real|private message/);
 });
 
+test('writes severity prefix before structured log data', () => {
+  const originalLog = console.log;
+  const originalWarn = console.warn;
+  const originalError = console.error;
+  const output = [];
+  console.log = (line) => output.push(line);
+  console.warn = (line) => output.push(line);
+  console.error = (line) => output.push(line);
+
+  try {
+    logEvent('info', 'test.info');
+    logEvent('warn', 'test.warn');
+    logEvent('error', 'test.error');
+
+    assert.match(output[0], /^\[INFO\] \{/);
+    assert.match(output[1], /^\[WARN\] \{/);
+    assert.match(output[2], /^\[ERROR\] \{/);
+    assert.equal(parseLogLine(output[0]).event, 'test.info');
+    assert.equal(parseLogLine(output[1]).event, 'test.warn');
+    assert.equal(parseLogLine(output[2]).event, 'test.error');
+  } finally {
+    console.log = originalLog;
+    console.warn = originalWarn;
+    console.error = originalError;
+  }
+});
+
 test('logs request ID, route, status, and duration exactly once on completion', () => {
   const req = new EventEmitter();
   req.method = 'GET';
@@ -68,7 +97,8 @@ test('logs request ID, route, status, and duration exactly once on completion', 
 
     assert.ok(res.headers['X-Request-ID']);
     assert.equal(output.length, 1);
-    const entry = JSON.parse(output[0]);
+    assert.match(output[0], /^\[INFO\] \{/);
+    const entry = parseLogLine(output[0]);
     assert.equal(entry.event, 'http.request.completed');
     assert.equal(entry.requestId, res.headers['X-Request-ID']);
     assert.equal(entry.route, '/health');
@@ -99,7 +129,8 @@ test('does not duplicate an aborted request when the response closes', () => {
     res.emit('close');
 
     assert.equal(output.length, 1);
-    assert.equal(JSON.parse(output[0]).event, 'http.request.aborted');
+    assert.match(output[0], /^\[WARN\] \{/);
+    assert.equal(parseLogLine(output[0]).event, 'http.request.aborted');
   } finally {
     console.warn = originalWarn;
   }

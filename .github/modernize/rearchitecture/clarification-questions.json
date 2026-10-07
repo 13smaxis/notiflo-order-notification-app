@@ -1,0 +1,585 @@
+{
+  "schema": "clarification-questions/v1",
+  "generated_at": "2026-10-06T18:19:48.4492105Z",
+  "user_input": "Implement the user-approved cellphone/password auth plan in this workspace using available team roles. Limit all reads and changes to notiflo-order-notification-customer; never touch notiflo-order-notification-app. The user supplied the existing trigger contract: replace public.handle_new_user in place and preserve the existing on_auth_user_created AFTER INSERT trigger on auth.users (do not add another trigger). The trigger owns customer/profile creation; profile.store_id is nullable; convert Auth E.164 +27 to local 0XXXXXXXXX when linking guest customer records; customer_address is an existing text column. Follow the approved plan at /memories/session/plan.md. Restore port 3002 throughout while preserving env overrides. Add focused node:test coverage and run backend tests plus frontend build. Do not access or apply a remote Supabase migration, expose secrets, or leave any dev server running. Existing edits in CustomerHeader.tsx and HomePage.tsx must be preserved.",
+  "title": "Customer Cellphone/Password Auth Integration",
+  "assessment_snapshot": {
+    "intro": "The supplied project profile describes a small customer-ordering application with:",
+    "bullets": [
+      "A Vite/React customer frontend and Node.js/Express backend",
+      "A user-approved plan replacing OTP/Twilio auth with Supabase cellphone/password authentication",
+      "A user-supplied contract preserving the existing auth trigger while replacing its function in place"
+    ]
+  },
+  "proposed_outcome": "Implement the approved in-place customer auth upgrade with Supabase-managed credentials, trigger-owned customer/profile linking, linked-customer app sessions, and shared cellphone/password flows while preserving existing unrelated behavior and the specified safety constraints.",
+  "scope": [
+    "frontend",
+    "backend",
+    "generic"
+  ],
+  "status": "answering",
+  "questions": [
+    {
+      "id": "F1",
+      "kit": "frontend",
+      "field": "target.framework",
+      "title": "Frontend framework version",
+      "question": "Which frontend framework and major version should this auth UI use? The project profile identifies React; confirm whether to retain its current major version or specify another target.",
+      "importance": "required",
+      "impact": 4,
+      "recommended": "Preserve the current React major version in this workspace",
+      "default": null,
+      "prefilled": true,
+      "prefilled_value": "React; preserve the current major version (exact major not supplied)",
+      "answer": {
+        "value": "React; preserve the current major version (exact major not supplied)",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "Preserve the current React major version in this workspace",
+          "label": "Preserve the current React major version in this workspace"
+        },
+        {
+          "value": "React 18",
+          "label": "React 18"
+        },
+        {
+          "value": "React 19",
+          "label": "React 19"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "F2",
+      "kit": "frontend",
+      "field": "target.component_library",
+      "title": "UI component library",
+      "question": "Which component library should the signup/sign-in UI use? You can preserve the existing project UI/component approach or name a target library.",
+      "importance": "required",
+      "impact": 4,
+      "recommended": "Preserve the existing project UI/component approach",
+      "default": null,
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": "Preserve the existing project UI/component approach",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "Preserve the existing project UI/component approach",
+          "label": "Preserve the existing project UI/component approach"
+        },
+        {
+          "value": "shadcn/ui",
+          "label": "shadcn/ui"
+        },
+        {
+          "value": "MUI",
+          "label": "MUI"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "F3",
+      "kit": "frontend",
+      "field": "visual.screenshots",
+      "title": "Auth UI reference",
+      "question": "Provide a screenshot, recording, or design URL for the in-scope account, checkout, and order-history auth UI, or state that no visual reference is required and the existing UI should be followed.",
+      "importance": "required",
+      "impact": 3,
+      "recommended": null,
+      "default": null,
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": "no visual reference is required and the existing UI should be followed",
+        "source": "user"
+      },
+      "depends_on": null,
+      "type": "text"
+    },
+    {
+      "id": "F4",
+      "kit": "frontend",
+      "field": "visual.design_system",
+      "title": "Design system",
+      "question": "What design system or design-token source should govern the auth UI? Provide a link/path or confirm the default of matching the existing UI using its CSS custom properties.",
+      "importance": "required",
+      "impact": 3,
+      "recommended": null,
+      "default": "match existing pixel-by-pixel using extracted CSS custom properties",
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": "match the existing UI using its CSS custom properties",
+        "source": "user"
+      },
+      "depends_on": null,
+      "type": "text"
+    },
+    {
+      "id": "F5",
+      "kit": "frontend",
+      "field": "compliance.accessibility",
+      "title": "Accessibility target",
+      "question": "Which accessibility standard should the auth flows target?",
+      "importance": "recommended",
+      "impact": 3,
+      "recommended": "WCAG 2.1 AA",
+      "default": "WCAG 2.1 AA",
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": "WCAG 2.1 AA",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "WCAG 2.1 AA",
+          "label": "WCAG 2.1 AA"
+        },
+        {
+          "value": "WCAG 2.2 AA",
+          "label": "WCAG 2.2 AA"
+        },
+        {
+          "value": "Section 508",
+          "label": "Section 508"
+        },
+        {
+          "value": "None / not required",
+          "label": "None / not required"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "F6",
+      "kit": "frontend",
+      "field": "compatibility.browsers",
+      "title": "Browser targets",
+      "question": "Which browser/runtime compatibility target should be used?",
+      "importance": "recommended",
+      "impact": 2,
+      "recommended": "Modern evergreen browsers: latest two major versions of Chrome, Firefox, Safari, and Edge",
+      "default": "modern evergreen (Chrome, Firefox, Safari, Edge — latest 2 major versions)",
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": "modern evergreen (Chrome, Firefox, Safari, Edge — latest 2 major versions)",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "Modern evergreen browsers: latest two major versions of Chrome, Firefox, Safari, and Edge",
+          "label": "Modern evergreen browsers (latest two major versions)"
+        },
+        {
+          "value": "Match the existing project browser targets",
+          "label": "Match the existing project browser targets"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "F7",
+      "kit": "frontend",
+      "field": "responsive.breakpoints",
+      "title": "Responsive strategy",
+      "question": "What responsive strategy should the auth UI follow?",
+      "importance": "recommended",
+      "impact": 2,
+      "recommended": "Mobile-first using the existing project breakpoints",
+      "default": "mobile-first using existing breakpoints detected from codebase",
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": "mobile-first using existing breakpoints detected from codebase",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "Mobile-first using the existing project breakpoints",
+          "label": "Mobile-first using the existing project breakpoints"
+        },
+        {
+          "value": "Match the current layout behavior",
+          "label": "Match the current layout behavior"
+        },
+        {
+          "value": "Desktop-first",
+          "label": "Desktop-first"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "F8",
+      "kit": "frontend",
+      "field": "i18n.locales",
+      "title": "Locales",
+      "question": "Which locales are in scope for the auth UI?",
+      "importance": "optional",
+      "impact": 1,
+      "recommended": "Preserve current locales",
+      "default": "preserve current locales; keep existing i18n library if present",
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": [
+          "preserve current locales; keep existing i18n library if present"
+        ],
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "Preserve current locales",
+          "label": "Preserve current locales"
+        },
+        {
+          "value": "en-ZA",
+          "label": "English (South Africa)"
+        },
+        {
+          "value": "None",
+          "label": "None"
+        }
+      ],
+      "allow_other": true,
+      "type": "multi_select"
+    },
+    {
+      "id": "F9",
+      "kit": "frontend",
+      "field": "state_mgmt.preference",
+      "title": "Client state",
+      "question": "What client-side state-management approach should the auth flows use?",
+      "importance": "optional",
+      "impact": 1,
+      "recommended": "Preserve the existing project pattern",
+      "default": "preserve existing pattern if identifiable; otherwise recommend minimal (component state + server-state library)",
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": "preserve existing pattern if identifiable; otherwise recommend minimal (component state + server-state library)",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "Preserve the existing project pattern",
+          "label": "Preserve the existing project pattern"
+        },
+        {
+          "value": "Component state",
+          "label": "Component state"
+        },
+        {
+          "value": "React Query / SWR for server state",
+          "label": "React Query / SWR for server state"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "F10",
+      "kit": "frontend",
+      "field": "routing.preference",
+      "title": "Routing preference",
+      "question": "What routing approach should the auth flows use?",
+      "importance": "optional",
+      "impact": 1,
+      "recommended": "Preserve the existing routing and URLs",
+      "default": "use the de-facto router for the chosen target framework",
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": "use the de-facto router for the chosen target framework",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "Preserve the existing routing and URLs",
+          "label": "Preserve the existing routing and URLs"
+        },
+        {
+          "value": "React Router",
+          "label": "React Router"
+        },
+        {
+          "value": "Framework-default routing",
+          "label": "Framework-default routing"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "B1",
+      "kit": "backend",
+      "field": "target.framework",
+      "title": "Backend framework version",
+      "question": "Which backend framework and major runtime version should the auth API use? The project profile identifies Node.js/Express; confirm preserving the current versions or specify another target.",
+      "importance": "required",
+      "impact": 4,
+      "recommended": "Preserve the current Node.js and Express versions in this workspace",
+      "default": null,
+      "prefilled": true,
+      "prefilled_value": "Node.js/Express; exact major versions not supplied",
+      "answer": {
+        "value": "Node.js/Express; exact major versions not supplied",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "Preserve the current Node.js and Express versions in this workspace",
+          "label": "Preserve the current Node.js and Express versions in this workspace"
+        },
+        {
+          "value": "Node.js 22 and Express 5",
+          "label": "Node.js 22 and Express 5"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "B2",
+      "kit": "backend",
+      "field": "api.contract_preservation",
+      "title": "API contract policy",
+      "question": "What API contract policy should apply while replacing OTP endpoints with password-auth endpoints?",
+      "importance": "required",
+      "impact": 5,
+      "recommended": "must preserve",
+      "default": "must preserve",
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": "must preserve",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "must preserve",
+          "label": "Must preserve all existing API contracts"
+        },
+        {
+          "value": "partial: retire OTP routes; preserve remaining API contracts",
+          "label": "Retire OTP routes; preserve remaining API contracts"
+        },
+        {
+          "value": "can break with versioning",
+          "label": "Breaking changes require a new API version"
+        },
+        {
+          "value": "can break",
+          "label": "Existing API contracts may be redesigned"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "B3",
+      "kit": "backend",
+      "field": "data.migration_strategy",
+      "title": "Database migration strategy",
+      "question": "Which database migration approach should the trigger and profile changes use?",
+      "importance": "required",
+      "impact": 5,
+      "recommended": "in-place",
+      "default": "TBD / assess in research phase",
+      "prefilled": true,
+      "prefilled_value": "in-place; replace public.handle_new_user while preserving the existing trigger",
+      "answer": {
+        "value": "in-place; replace public.handle_new_user while preserving the existing trigger",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "in-place",
+          "label": "In-place migration on the existing schema/database"
+        },
+        {
+          "value": "dual-write",
+          "label": "Dual-write old and new schemas"
+        },
+        {
+          "value": "new schema",
+          "label": "New schema with data migration"
+        },
+        {
+          "value": "no migration",
+          "label": "No database migration"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "B4",
+      "kit": "backend",
+      "field": "auth.framework",
+      "title": "Authentication framework",
+      "question": "Which authentication system should own credentials and which app-session behavior should be retained?",
+      "importance": "recommended",
+      "impact": 4,
+      "recommended": "Supabase Auth for credentials; retain signed customer-linked app sessions",
+      "default": "preserve existing auth mechanism; detect from codebase",
+      "prefilled": true,
+      "prefilled_value": "Supabase Auth owns credentials; app issues signed sessions including customer_id",
+      "answer": {
+        "value": "Supabase Auth owns credentials; app issues signed sessions including customer_id",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "Supabase Auth for credentials; retain signed customer-linked app sessions",
+          "label": "Supabase Auth for credentials; retain signed customer-linked app sessions"
+        },
+        {
+          "value": "Preserve the existing OTP authentication mechanism",
+          "label": "Preserve the existing OTP authentication mechanism"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "B5",
+      "kit": "backend",
+      "field": "nfr.sla",
+      "title": "Service-level targets",
+      "question": "What latency, throughput, or availability targets should the auth API meet?",
+      "importance": "recommended",
+      "impact": 2,
+      "recommended": null,
+      "default": "match current production baseline; no regression",
+      "prefilled": false,
+      "prefilled_value": null,
+      "answer": {
+        "value": "match current production baseline; no regression",
+        "source": "default"
+      },
+      "depends_on": null,
+      "type": "text"
+    },
+    {
+      "id": "G1",
+      "kit": "generic",
+      "field": "success.definition",
+      "title": "Definition of done",
+      "question": "What outcome and verification evidence define successful completion?",
+      "importance": "required",
+      "impact": 5,
+      "recommended": null,
+      "default": "feature parity with the current system; all existing user-facing behaviors preserved",
+      "prefilled": true,
+      "prefilled_value": "Implement the approved cellphone/password signup and sign-in flows with trigger-owned customer/profile linking and customer-linked sessions; focused backend node:test coverage and frontend build must pass. Preserve other required behavior and do not access remote Supabase or expose secrets.",
+      "answer": {
+        "value": "Implement the approved cellphone/password signup and sign-in flows with trigger-owned customer/profile linking and customer-linked sessions; focused backend node:test coverage and frontend build must pass. Preserve other required behavior and do not access remote Supabase or expose secrets.",
+        "source": "user"
+      },
+      "depends_on": null,
+      "type": "text"
+    },
+    {
+      "id": "G2",
+      "kit": "generic",
+      "field": "out_of_scope",
+      "title": "Out-of-scope boundaries",
+      "question": "Confirm the explicit scope exclusions and preservation constraints, or add any others.",
+      "importance": "recommended",
+      "impact": 3,
+      "recommended": null,
+      "default": "no explicit exclusions; agent will infer from project structure",
+      "prefilled": true,
+      "prefilled_value": "Exclude notiflo-order-notification-app; do not apply a remote Supabase migration, expose secrets, or leave a dev server running; preserve existing edits in CustomerHeader.tsx and HomePage.tsx.",
+      "answer": {
+        "value": "Exclude notiflo-order-notification-app; do not apply a remote Supabase migration, expose secrets, or leave a dev server running; preserve existing edits in CustomerHeader.tsx and HomePage.tsx.",
+        "source": "user"
+      },
+      "depends_on": null,
+      "type": "text"
+    },
+    {
+      "id": "G3",
+      "kit": "generic",
+      "field": "existing_tests.posture",
+      "title": "Existing test policy",
+      "question": "What must-pass policy applies to the existing tests and requested frontend build?",
+      "importance": "recommended",
+      "impact": 3,
+      "recommended": "partial: backend tests and frontend build must pass",
+      "default": "must pass",
+      "prefilled": true,
+      "prefilled_value": "Backend tests and frontend build are explicitly required to run",
+      "answer": {
+        "value": "Backend tests and frontend build are explicitly required to run",
+        "source": "user"
+      },
+      "depends_on": null,
+      "options": [
+        {
+          "value": "must pass",
+          "label": "Must pass"
+        },
+        {
+          "value": "partial: backend tests and frontend build must pass",
+          "label": "Backend tests and frontend build must pass"
+        },
+        {
+          "value": "can rewrite",
+          "label": "Tests may be rewritten with equivalent coverage"
+        },
+        {
+          "value": "ignore",
+          "label": "Existing tests may be ignored"
+        }
+      ],
+      "allow_other": true,
+      "type": "single_select"
+    },
+    {
+      "id": "G5",
+      "kit": "generic",
+      "field": "constraints.additional",
+      "title": "Additional constraints",
+      "question": "List any additional requirements, exclusions, dependencies, compliance rules, or operational constraints not already captured above.",
+      "importance": "optional",
+      "impact": 2,
+      "recommended": null,
+      "default": "None beyond the decisions listed in this specification.",
+      "prefilled": true,
+      "prefilled_value": "None beyond the decisions listed in this specification.",
+      "answer": {
+        "value": "None beyond the decisions listed in this specification.",
+        "source": "user"
+      },
+      "depends_on": null,
+      "type": "text"
+    }
+  ]
+}
