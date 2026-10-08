@@ -3,8 +3,20 @@ import { EventEmitter } from 'node:events';
 import test from 'node:test';
 import { logEvent, serializeLogEntry } from '../services/logger.js';
 import { requestLogger } from '../services/request-logger.js';
+import { getErrorMessage } from '../services/error-utils.js';
 
 const parseLogLine = (line) => JSON.parse(line.slice(line.indexOf(' ') + 1));
+
+test('extracts readable messages from Supabase errors and malformed objects', () => {
+  assert.equal(getErrorMessage({ message: 'User already exists' }), 'User already exists');
+  assert.equal(getErrorMessage({ message: '{}' }), 'Supabase Auth registration failed: Unknown error');
+  assert.equal(getErrorMessage({}), 'Supabase Auth registration failed: Unknown error');
+  assert.equal(getErrorMessage(null), 'Registration failed');
+  assert.equal(
+    getErrorMessage({ name: 'AuthRetryableFetchError', status: 500 }),
+    'Supabase Auth registration failed (500): AuthRetryableFetchError'
+  );
+});
 
 test('serializes structured log entries with a timestamp and event metadata', () => {
   const entry = JSON.parse(serializeLogEntry('info', 'http.request.completed', {
@@ -45,6 +57,19 @@ test('omits sensitive fields recursively and prevents metadata from overriding c
   assert.equal('authorization' in entry, false);
   assert.equal('messageText' in entry.details, false);
   assert.doesNotMatch(serialized, /27600000000|not-a-real|private message/);
+  assert.equal('details' in entry, true);
+});
+
+test('preserves explicit error messages while masking sensitive fields', () => {
+  const entry = JSON.parse(serializeLogEntry('error', 'auth.registration.supabase_rejected', {
+    errorCode: 'AuthRetryableFetchError',
+    errorMessage: '{}',
+    password: 'secret',
+  }));
+
+  assert.equal(entry.errorCode, 'AuthRetryableFetchError');
+  assert.equal(entry.errorMessage, '{}');
+  assert.equal('password' in entry, false);
 });
 
 test('writes severity prefix before structured log data', () => {

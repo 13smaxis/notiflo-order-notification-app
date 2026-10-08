@@ -1,8 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
-import { sendServerEvent } from '@/lib/api';
+import { apiUrl, sendServerEvent } from '@/lib/api';
 import { Profile, Store } from '@/types/order';
 
 export interface AuthUser {
@@ -45,9 +43,7 @@ function joinName(parts: Array<string | undefined>): string | undefined {
   return filtered.length > 0 ? filtered.join(' ') : undefined;
 }
 
-function normalizePhoneNumber(phoneNumber: string): string {
-  return phoneNumber.trim();
-}
+const normalizePhoneNumber = (phoneNumber: string) => phoneNumber.trim();
 
 function isValidPhoneNumber(phoneNumber: string): boolean {
   return /^0\d{9}$/.test(phoneNumber.trim());
@@ -137,7 +133,13 @@ function mergeProfile(profile: Profile | null, metadata: UserMetadata | undefine
   };
 }
 
-function buildAuthUser(user: User, profiles: Profile[], selectedStoreId: string | null, accessToken: string | null): AuthUser {
+type AuthApiUser = {
+  id: string;
+  email: string | null;
+  user_metadata: UserMetadata;
+};
+
+function buildAuthUser(user: AuthApiUser, profiles: Profile[], selectedStoreId: string | null, accessToken: string | null): AuthUser {
   const metadata = user.user_metadata as UserMetadata | undefined;
   const availableStores = profiles.length > 0 ? profiles.map(profileToStore) : [fallbackStoreFromMetadata(user.id, metadata)];
   const mergedProfiles = profiles.length > 0 ? profiles.map((profile) => mergeProfile(profile, metadata, user.id)) : [createFallbackProfile(user.id, metadata)];
@@ -184,123 +186,77 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProfiles = useCallback(async (authUserId: string) => {
-    const { data: profiles, error: profileError } = await supabase
-      .from('profile')
-      .select('*')
-      .eq('auth_user_id', authUserId)
-      .order('created_at', { ascending: true });
+    const storedToken = window.localStorage.getItem('auth_token');
+    const response = await fetch(apiUrl('/api/auth/session'), {
+      headers: { Authorization: `Bearer ${storedToken || ''}` },
+    });
 
-    if (profileError) {
-      throw profileError;
+    if (!response.ok) {
+      throw new Error('Failed to load profile');
     }
 
-    return profiles || [];
+    const sessionData = await response.json();
+    if (sessionData.user?.id !== authUserId) {
+      throw new Error('Session user does not match');
+    }
+
+    return sessionData.profiles || [];
   }, []);
 
-  const hydrateUser = useCallback(async (session: Session | null) => {
-    if (!session?.user) {
+  const hydrateUser = useCallback(async (accessToken: string | null) => {
+    if (!accessToken) {
       setUser(null);
       setError(null);
       return;
     }
 
     try {
-      const profiles = await fetchProfiles(session.user.id);
-      const selectedStoreId = buildSelectedStoreId(session.user.id, profiles);
-      setUser(buildAuthUser(session.user, profiles, selectedStoreId, session.access_token));
+      const response = await fetch(apiUrl('/api/auth/session'), {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const sessionData = response.ok ? await response.json() : null;
+
+      if (!response.ok || !sessionData?.user) {
+        throw new Error('Invalid or expired session');
+      }
+
+      const profiles = sessionData.profiles || [];
+      const selectedStoreId = buildSelectedStoreId(sessionData.user.id, profiles);
+      setUser(buildAuthUser(sessionData.user, profiles, selectedStoreId, accessToken));
       setError(null);
     } catch (err: unknown) {
       console.error('Profile hydration error:', err);
-      setUser(buildAuthUser(session.user, [], null, session.access_token));
+      setUser(null);
       setError(err instanceof Error ? err.message : 'Failed to load profile');
     }
-  }, [fetchProfiles]);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
 
     const checkSession = async () => {
-  try {
-    setLoading(true);
-
-    // FIRST: Check localStorage for stored token (from new login flow)
-    const storedToken = typeof window !== 'undefined' 
-      ? window.localStorage.getItem('auth_token') 
-      : null;
-
-    if (storedToken) {
-      console.log('✅ Found stored auth token, restoring session');
-      
-      const refreshToken = localStorage.getItem('refresh_token');
-      
-      // Restore session from stored tokens
-      await supabase.auth.setSession({
-        access_token: storedToken,
-        refresh_token: refreshToken || '',
-      });
-    }
-
-    // SECOND: Get current session from Supabase
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!isMounted) {
-      return;
-    }
-
-    await hydrateUser(session);
-  } catch (err: unknown) {
-    console.error('Session check error:', err);
-    setError(err instanceof Error ? err.message : 'Session check failed');
-  } finally {
-    if (isMounted) {
-      setLoading(false);
-    }
-  }
-};
-   /* const checkSession = async () => {
       try {
         setLoading(true);
-
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!isMounted) {
+        const storedToken = window.localStorage.getItem('auth_token');
+        if (!storedToken) {
+          if (isMounted) setUser(null);
           return;
         }
 
-        await hydrateUser(session);
+        await hydrateUser(storedToken);
       } catch (err: unknown) {
         console.error('Session check error:', err);
-        setError(err instanceof Error ? err.message : 'Session check failed');
+        if (isMounted) setError(err instanceof Error ? err.message : 'Session check failed');
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
-    };*/
-
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!isMounted) {
-        return;
-      }
-
-      if (!session?.user) {
-        setUser(null);
-        setError(null);
-        return;
-      }
-
-      void hydrateUser(session);
-    });
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
     };
+
+    void checkSession();
+    return () => { isMounted = false; };
   }, [hydrateUser]);
 
-  const login = useCallback(async (phoneNumber: string, password: string) => {
+  const login = useCallback(async (phoneNumber: string, password: string, storeId?: string) => {
     setAuthenticating(true);
 
     try {
@@ -314,23 +270,29 @@ export function useAuth() {
         throw new Error('Phone number must be 0 followed by nine digits');
       }
 
-      const authEmail = buildAuthEmailFromPhone(normalizedPhoneNumber);
+      if (!storeId) {
+        throw new Error('Store selection is required');
+      }
 
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password,
+      const response = await fetch(apiUrl('/api/auth/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: normalizedPhoneNumber, storeId, password }),
       });
+      const data = await response.json();
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('No user returned from auth');
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
 
-      const profiles = await fetchProfiles(authData.user.id);
-      const selectedStoreId = buildSelectedStoreId(authData.user.id, profiles);
-      const authUser = buildAuthUser(authData.user, profiles, selectedStoreId, authData.session?.access_token ?? null);
-
+      const authUser = buildAuthUser(data.user, [data.profile], data.profile.storeId, data.session.access_token);
+      localStorage.setItem('auth_token', data.session.access_token);
+      localStorage.setItem('refresh_token', data.session.refresh_token);
+      localStorage.setItem('user_id', data.user.id);
+      localStorage.setItem('selected_store', data.profile.storeId);
       setUser(authUser);
       void sendServerEvent(authUser.accessToken, 'auth.login.completed', {
-        storeId: selectedStoreId ?? undefined,
+        storeId: data.profile.storeId,
       });
       return { user: authUser, error: null };
     } catch (err: unknown) {
@@ -341,12 +303,14 @@ export function useAuth() {
     } finally {
       setAuthenticating(false);
     }
-  }, [fetchProfiles]);
+  }, []);
 
   const logout = useCallback(async () => {
     try {
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) throw signOutError;
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('selected_store');
       setUser(null);
       setError(null);
     } catch (err: unknown) {
@@ -375,39 +339,32 @@ export function useAuth() {
       }
 
       const fullName = `${input.ownerName.trim()} ${input.ownerSurname.trim()}`.trim();
-      const authEmail = buildAuthEmailFromPhone(normalizedPhoneNumber);
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: authEmail,
-        password: input.password,
-        options: {
-          data: {
-            role: input.role,
-            full_name: fullName,
-            store_name: input.storeName.trim(),
-            store_number: Number(normalizedStoreNumber),
-            store_phone: normalizedPhoneNumber,
-            owner_name: input.ownerName.trim(),
-            owner_surname: input.ownerSurname.trim(),
-            contact_email: input.email?.trim() || '',
-            phone_number: normalizedPhoneNumber,
-            employee_number: input.employeeNumber?.trim() || '',
-          },
-        },
+      const response = await fetch(apiUrl('/api/auth/register'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: normalizedPhoneNumber,
+          password: input.password,
+          ownerName: input.ownerName.trim(),
+          ownerSurname: input.ownerSurname.trim(),
+          storeName: input.storeName.trim(),
+          storeNumber: normalizedStoreNumber,
+          role: input.role,
+          employeeNumber: input.employeeNumber?.trim() || '',
+          contactEmail: input.email?.trim() || '',
+        }),
       });
+      const data = await response.json();
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('No user returned from auth');
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
 
-      const authUser = buildAuthUser(authData.user, [createFallbackProfile(authData.user.id, {
-        role: input.role,
-        full_name: fullName,
-        store_name: input.storeName.trim(),
-        store_number: normalizedStoreNumber,
-        store_phone: normalizedPhoneNumber,
-        owner_name: input.ownerName.trim(),
-        owner_surname: input.ownerSurname.trim(),
-      })], null, authData.session?.access_token ?? null);
-
+      const authUser = buildAuthUser(data.user, data.profiles || [], null, data.session?.access_token ?? null);
+      localStorage.setItem('auth_token', data.session.access_token);
+      localStorage.setItem('refresh_token', data.session.refresh_token);
+      localStorage.setItem('user_id', data.user.id);
+      localStorage.setItem('selected_store', data.profiles?.[0]?.store_id || '');
       setUser(authUser);
       return { user: authUser, error: null };
     } catch (err: unknown) {
@@ -455,7 +412,7 @@ export function useAuth() {
       setUser((current) => {
         if (!current) return current;
         return buildAuthUser(
-          { id: current.auth_user_id, email: current.email } as User,
+          { id: current.auth_user_id, email: current.email, user_metadata: {} } as AuthApiUser,
           profiles,
           selectedStoreId,
           current.accessToken

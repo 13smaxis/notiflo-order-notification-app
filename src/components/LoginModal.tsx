@@ -445,7 +445,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         return;
       }
 
-      const { user, error: loginError } = await login(normalizedLoginPhone, password);
+      const { user, error: loginError } = await login(normalizedLoginPhone, password, selectedStore || undefined);
 
       if (loginError) {
         setError(loginError);

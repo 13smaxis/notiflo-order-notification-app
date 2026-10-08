@@ -29,6 +29,7 @@ import { logEvent } from './services/logger.js';
 import { requestLogger } from './services/request-logger.js';
 import { normalizeClientEvent } from './services/client-events.js';
 import { ensureDefaultOrderStatuses } from './services/order-status.js';
+import { getErrorMessage } from './services/error-utils.js';
 
 dotenv.config();
 const app = express();
@@ -475,6 +476,73 @@ app.post('/api/auth/login-with-phone', async (req, res) => {
 
 
 /*
+ * SESSION ENDPOINT
+ * GET /api/auth/session
+ * Returns the authenticated user and profile data from the server token.
+ */
+app.get('/api/auth/session', async (req, res) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing or invalid authorization header' });
+    }
+
+    try {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+
+        if (userError || !user) {
+            logEvent('warn', 'auth.session.invalid', {
+                requestId: req.requestId,
+                errorCode: userError?.code,
+            });
+            return res.status(401).json({ error: 'Invalid or expired session' });
+        }
+
+        const { data: profiles, error: profileError } = await supabaseAdmin
+            .from('profile')
+            .select('*')
+            .eq('auth_user_id', user.id)
+            .order('created_at', { ascending: true });
+
+        if (profileError) {
+            logEvent('error', 'auth.session.profile_load_failed', {
+                requestId: req.requestId,
+                userId: user.id,
+                errorCode: profileError.code,
+                errorMessage: profileError.message,
+            });
+            return res.status(500).json({ error: 'Failed to load profile' });
+        }
+
+        logEvent('info', 'auth.session.completed', {
+            requestId: req.requestId,
+            userId: user.id,
+            profileCount: profiles?.length || 0,
+        });
+
+        res.json({
+            user,
+            profiles: profiles || [],
+            session: {
+                access_token: token,
+                refresh_token: null,
+                expires_in: null,
+            },
+        });
+    } catch (error) {
+        logEvent('error', 'auth.session.failed', {
+            requestId: req.requestId,
+            errorCode: error.code,
+            errorName: error.name,
+            errorMessage: error.message,
+            errorStack: error.stack,
+        });
+        res.status(500).json({ error: 'Session validation failed' });
+    }
+});
+
+/*
  * REGISTER ENDPOINT
  * POST /api/auth/register
  * Register a new user with phone + password
@@ -483,10 +551,22 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         const { phoneNumber, password, ownerName, ownerSurname, storeName, storeNumber } = req.body;
 
+        logEvent('info', 'auth.registration.request_received', {
+            requestId: req.requestId,
+            hasPhoneNumber: Boolean(phoneNumber),
+            hasPassword: Boolean(password),
+            hasOwnerName: Boolean(ownerName),
+            hasOwnerSurname: Boolean(ownerSurname),
+            hasStoreName: Boolean(storeName),
+            hasStoreNumber: Boolean(storeNumber),
+        });
+
         if (!phoneNumber || !password) {
             logEvent('warn', 'auth.registration.validation_failed', {
                 requestId: req.requestId,
                 reason: 'required_fields_missing',
+                hasPhoneNumber: Boolean(phoneNumber),
+                hasPassword: Boolean(password),
             });
             return res.status(400).json({
                 error: 'Phone number and password are required'
@@ -496,6 +576,12 @@ app.post('/api/auth/register', async (req, res) => {
         // Normalize phone
         const normalizedPhone = String(phoneNumber).replace(/[\s\-()]/g, '').trim();
         const email = `${normalizedPhone}@phone.notiflo.local`;
+
+        logEvent('info', 'auth.registration.phone_normalized', {
+            requestId: req.requestId,
+            phoneLength: normalizedPhone.length,
+            isPhoneNormalized: normalizedPhone !== String(phoneNumber).trim(),
+        });
 
         // Create user with metadata
         const { data, error } = await supabaseAdmin.auth.admin.createUser({
@@ -513,34 +599,82 @@ app.post('/api/auth/register', async (req, res) => {
         });
 
         if (error) {
-            logEvent('warn', 'auth.registration.rejected', {
+            const errorMessage = getErrorMessage(error, 'Registration failed');
+            logEvent('error', 'auth.registration.supabase_rejected', {
                 requestId: req.requestId,
                 errorCode: error.code,
+                errorMessage,
+                errorStatus: error.status,
+                errorName: error.name,
+                emailDomain: email.split('@')[1],
             });
             return res.status(400).json({
-                error: error.message
+                error: errorMessage
             });
+        }
+
+        const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (signInError || !signInData.user || !signInData.session) {
+            logEvent('error', 'auth.registration.session_failed', {
+                requestId: req.requestId,
+                userId: data.user.id,
+                errorCode: signInError?.code,
+                errorMessage: signInError?.message,
+            });
+            return res.status(500).json({ error: 'Registration completed but session creation failed' });
+        }
+
+        const { data: profiles, error: profileError } = await supabaseAdmin
+            .from('profile')
+            .select('*')
+            .eq('auth_user_id', data.user.id)
+            .order('created_at', { ascending: true });
+
+        if (profileError) {
+            logEvent('error', 'auth.registration.profile_load_failed', {
+                requestId: req.requestId,
+                userId: data.user.id,
+                errorCode: profileError.code,
+                errorMessage: profileError.message,
+            });
+            return res.status(500).json({ error: 'Registration completed but profile lookup failed' });
         }
 
         logEvent('info', 'auth.registration.completed', {
             requestId: req.requestId,
             userId: data.user.id,
+            emailDomain: email.split('@')[1],
+            profileCount: profiles?.length || 0,
         });
         res.status(201).json({
             success: true,
-            user: data.user,
+            user: signInData.user,
+            session: {
+                access_token: signInData.session.access_token,
+                refresh_token: signInData.session.refresh_token,
+                expires_in: signInData.session.expires_in,
+            },
+            profiles: profiles || [],
             message: 'User registered successfully',
             timestamp: new Date().toISOString()
         });
 
     } catch (err) {
+        const errorMessage = getErrorMessage(err, 'Registration failed');
         logEvent('error', 'auth.registration.failed', {
             requestId: req.requestId,
-            errorCode: err.code,
+            errorCode: err?.code,
+            errorName: err?.name,
+            errorMessage,
+            errorStack: err?.stack,
         });
         res.status(500).json({
-            error: 'Registration failed',
-            details: err.message
+            error: errorMessage,
+            details: errorMessage
         });
     }
 });

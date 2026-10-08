@@ -4,8 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { apiUrl, sendServerEvent } from '@/lib/api';
-import { supabase } from '@/lib/supabase';
+import { apiUrl } from '@/lib/api';
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -116,51 +115,6 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
       });
 
       if (registerError) {
-        if (registerError.includes('already') || registerError.includes('exists')) {
-          try {
-            const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-              email: registerEmail.trim() || `${normalizedRegisterPhone}@phone.notiflo.local`,
-              password,
-            });
-
-            if (loginError || !loginData?.session) {
-              setError('Phone/email or password is incorrect');
-              return;
-            }
-
-            void sendServerEvent(loginData.session.access_token, 'auth.login.completed');
-
-            const addStoreResponse = await fetch(apiUrl('/api/add-store'), {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${loginData.session.access_token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                storeNumber: storeNumber.trim(),
-                storeName: shopName.trim(),
-                storePhone: normalizedRegisterPhone,
-                role,
-              }),
-            });
-
-            const addStoreResult = await addStoreResponse.json();
-
-            if (!addStoreResponse.ok) {
-              setError(addStoreResult.error || 'Failed to add store');
-              return;
-            }
-
-            resetForm();
-            onClose();
-            return;
-          } catch (addStoreError) {
-            console.error('Add store error:', addStoreError);
-            setError('Failed to add store to existing account');
-            return;
-          }
-        }
-
         setError(registerError);
         return;
       }

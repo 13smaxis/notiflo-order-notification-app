@@ -2,7 +2,11 @@ const sensitiveField = /(authorization|password|token|secret|email|phone|body|me
 
 const sanitizeFields = (fields) => Object.fromEntries(
   Object.entries(fields || {}).flatMap(([key, value]) => {
-    if (sensitiveField.test(key) || value === undefined) {
+    if (sensitiveField.test(key) && key !== 'errorMessage' && key !== 'errorDetails' && key !== 'details') {
+      return [];
+    }
+
+    if (value === undefined) {
       return [];
     }
 
